@@ -1,0 +1,14 @@
+{
+  "name": "mito-architect",
+  "private": true,
+  "version": "0.5.0-dev",
+  "workspaces": [
+    "visualization-lib",
+    "web"
+  ],
+  "scripts": {
+    "build": "npm --workspaces run build",
+    "typecheck": "npm --workspaces run typecheck",
+    "lint": "npm --workspaces run lint"
+  }
+}
