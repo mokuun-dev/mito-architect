@@ -1,0 +1,29 @@
+services:
+  server:
+    build: .
+    image: mito-architect:local
+    # Loopback-only port: the API runs without a key, guarded by its Host and
+    # Origin checks. Set MITO_API_KEY instead before publishing it elsewhere.
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      MITO_ALLOW_UNAUTHENTICATED: "1"
+
+  web:
+    image: node:22-bookworm
+    working_dir: /src
+    command: sh -c "npm ci && npm --workspace web run dev -- --host 0.0.0.0"
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - .:/src
+      - web_node_modules:/src/node_modules
+      - web_workspace_node_modules:/src/web/node_modules
+      - viz_workspace_node_modules:/src/visualization-lib/node_modules
+    depends_on:
+      - server
+
+volumes:
+  web_node_modules:
+  web_workspace_node_modules:
+  viz_workspace_node_modules:
