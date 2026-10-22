@@ -33,16 +33,28 @@ pub(super) fn validate_architecture_projection(value: &Value) -> Result<(), Stri
                 .and_then(Value::as_u64)
                 .is_some()
     });
+    let positive_molecule_ids = molecules
+        .iter()
+        .filter(|molecule| {
+            molecule
+                .get("alternate_event_ids")
+                .and_then(Value::as_array)
+                .is_some_and(|alternates| !alternates.is_empty())
+        })
+        .filter_map(|molecule| molecule.get("id").and_then(Value::as_str))
+        .collect::<HashSet<_>>();
+    // Mirrors the CLI contract: positive event evidence, including a deletion,
+    // can be informative even when no aligned reference base passes the
+    // quality threshold.
     let callable_molecule_ids = callability
         .iter()
-        .enumerate()
-        .filter_map(|(index, entry)| {
+        .filter_map(|entry| {
             let id = entry.get("molecule_id")?.as_str()?;
             let known = entry.get("known")?.as_bool()?;
             let callable_bases = entry.get("callable_bases")?.as_u64()?;
-            (known && callable_bases != 0).then_some((index, id.to_owned()))
+            (known && (callable_bases != 0 || positive_molecule_ids.contains(id)))
+                .then(|| id.to_owned())
         })
-        .map(|(_, id)| id)
         .collect::<HashSet<_>>();
     let mut molecule_ids = Vec::with_capacity(molecules.len());
     let mut eligible_indices = HashSet::new();

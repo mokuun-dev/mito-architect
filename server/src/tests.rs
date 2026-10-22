@@ -889,6 +889,28 @@ async fn evidence_graph_selection_is_independent_of_multipart_field_order() {
 }
 
 #[test]
+fn evidence_graph_results_with_structural_phase_links_satisfy_contract() {
+    // Phase links pair SV events with SNVs and indels; the contract once
+    // rejected these valid results as internal errors.
+    for fixture in ["truth_phase_matrix.sam", "truth_architectures.sam"] {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../fixtures")
+            .join(fixture);
+        let options = mito_ffi::AnalyzeOptions {
+            emit_evidence_graph: true,
+            ..mito_ffi::AnalyzeOptions::default()
+        };
+        let json = mito_ffi::MitoEngine::new()
+            .expect("engine should start")
+            .analyze_with_options(&path, None, options)
+            .expect("fixture should analyze");
+        let value: Value = serde_json::from_str(&json).expect("result should parse");
+        validate_result_contract(&value)
+            .unwrap_or_else(|error| panic!("{fixture} violates the contract: {error}"));
+    }
+}
+
+#[test]
 fn architecture_event_profiles_fail_closed_on_count_drift() {
     let mut result: Value = serde_json::from_str(include_str!(
         "../../fixtures/truth_architectures.expected.json"

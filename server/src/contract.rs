@@ -286,20 +286,19 @@ pub(super) fn validate_unified_variant_projection(value: &Value) -> Result<(), S
             let event_id = event_ids[row]
                 .as_str()
                 .ok_or_else(|| "observation event ID must be a string".to_string())?;
-            let Some(definition) = definitions.get(event_id) else {
-                continue;
-            };
+            if !event_order.contains_key(event_id) {
+                return Err(format!("observation references unknown event {event_id}"));
+            }
             let state = states[row]
                 .as_str()
                 .ok_or_else(|| "observation state must be a string".to_string())?;
-            let source = sources[row]
-                .as_str()
-                .ok_or_else(|| "observation evidence source must be a string".to_string())?;
             if !evidence_eligible.contains(molecule_id) {
                 return Err(format!(
                     "observation for event {event_id} belongs to an evidence-ineligible molecule"
                 ));
             }
+            // Phase links pair every observed event type (SNV, indel, SV,
+            // complex); only SNV/small-indel events feed the variant counts.
             if phase_observations
                 .entry(molecule_id.to_owned())
                 .or_default()
@@ -310,6 +309,12 @@ pub(super) fn validate_unified_variant_projection(value: &Value) -> Result<(), S
                     "duplicate molecule/event observation {molecule_id}/{event_id}"
                 ));
             }
+            let Some(definition) = definitions.get(event_id) else {
+                continue;
+            };
+            let source = sources[row]
+                .as_str()
+                .ok_or_else(|| "observation evidence source must be a string".to_string())?;
             let projected = counts.entry(event_id.to_owned()).or_default();
             match state {
                 "ALTERNATE" => projected[0] += 1,
