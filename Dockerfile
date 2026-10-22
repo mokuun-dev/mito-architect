@@ -1,4 +1,4 @@
-FROM rust:1.94-trixie AS build
+FROM rust:1.98-trixie AS build
 
 # Debian trixie ships htslib 1.21; the core needs 1.18 or newer.
 RUN apt-get update && apt-get install -y --no-install-recommends \
