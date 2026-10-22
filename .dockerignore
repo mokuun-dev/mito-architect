@@ -1,0 +1,11 @@
+# The image only builds the Rust binaries and the native core; send nothing else.
+*
+!Cargo.toml
+!Cargo.lock
+!CMakeLists.txt
+!cmake/
+!core/
+!ffi/
+!cli/
+!server/
+core/data/rcrs.fasta.fai

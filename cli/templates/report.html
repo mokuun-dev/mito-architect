@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mito-Architect Report</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08111f;
+      --panel: #101a2b;
+      --panel-2: #152238;
+      --text: #e5edf8;
+      --muted: #91a1b8;
+      --border: #263244;
+      --accent: #5eead4;
+    }
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #eef3f9;
+      --text: #102033;
+      --muted: #53657c;
+      --border: #d7e0eb;
+      --accent: #0f766e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 22px 28px;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panel) 86%, transparent);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 38px);
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    button, a.button {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 9px 12px;
+      font-weight: 650;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    button:hover, a.button:hover {
+      border-color: var(--accent);
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      padding: 18px;
+    }
+    #circos {
+      min-height: 540px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+    aside {
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+    section {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 16px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+    .metric {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .metric:last-child {
+      border-bottom: 0;
+    }
+    .metric strong {
+      font-size: 20px;
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    #tooltip, #selection {
+      min-height: 22px;
+      color: var(--accent);
+      font-size: 14px;
+    }
+    pre {
+      max-height: 260px;
+      overflow: auto;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .wide {
+      grid-column: 1 / -1;
+    }
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .mini-metric {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 12px;
+    }
+    .mini-metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+    .mini-metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 18px;
+    }
+    .variant-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.7fr 0.7fr 1.4fr;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 0;
+      font-size: 13px;
+    }
+    .variant-grid.header {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+    #genome-distribution {
+      margin: 12px 0;
+      overflow-x: auto;
+    }
+    #genome-distribution svg {
+      min-width: 760px;
+      width: 100%;
+      height: auto;
+    }
+    @media (max-width: 980px) {
+      header { align-items: flex-start; flex-direction: column; }
+      main { grid-template-columns: 1fr; }
+      .actions { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Mito-Architect Report</h1>
+      <div class="subtitle" id="sample-line">mtDNA long-read analysis</div>
+    </div>
+    <div class="actions">
+      <button id="theme-button" type="button">Toggle theme</button>
+      <button id="download-json" type="button">Download JSON</button>
+      <button id="download-svg" type="button">Export SVG</button>
+    </div>
+  </header>
+  <main>
+    <div id="circos"></div>
+    <aside>
+      <section>
+        <h2>Run Summary</h2>
+        <div class="metric"><span>Passed reads</span><strong id="passed">0</strong></div>
+        <div class="metric"><span>NUMT filtered</span><strong id="filtered">0</strong></div>
+        <div class="metric"><span>Structural variants</span><strong id="sv-count">0</strong></div>
+        <div class="metric"><span>Clusters</span><strong id="cluster-count">0</strong></div>
+      </section>
+      <section>
+        <h2>Selection</h2>
+        <div id="selection">No feature selected</div>
+        <div id="tooltip"></div>
+      </section>
+      <section>
+        <h2>Embedded Data</h2>
+        <pre>{{PRETTY_JSON}}</pre>
+      </section>
+    </aside>
+    <section class="wide">
+      <h2>Cluster Mutations</h2>
+      <div id="cluster-detail-summary" class="subtitle"></div>
+      <div id="genome-distribution"></div>
+      <div id="variant-table"></div>
+    </section>
+    <section class="wide">
+      <h2>Module Summary</h2>
+      <div class="module-grid">
+        <div class="mini-metric"><span>Haplogroups</span><strong id="haplogroup-status">unassigned</strong></div>
+        <div class="mini-metric"><span>Mean depth</span><strong id="mean-depth">0.00</strong></div>
+        <div class="mini-metric"><span>Clinical cache</span><strong id="clinical-status">local</strong></div>
+        <div class="mini-metric"><span>Multi-sample</span><strong id="sample-count">1 sample</strong></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    window.__DATA__ = {{DATA}};
+    {{RUNTIME_JS}}
+
+    const data = window.__DATA__;
+    const app = new window.MitoCircos(document.getElementById('circos'), data).render();
+    document.getElementById('sample-line').textContent = `${data.metadata.sample} | ${data.metadata.reference_length} bp | ${data.metadata.engine_version}`;
+    document.getElementById('passed').textContent = data.filter_stats.passed_reads;
+    document.getElementById('filtered').textContent = data.filter_stats.numt_filtered_reads;
+    document.getElementById('sv-count').textContent = data.svs.length;
+    document.getElementById('cluster-count').textContent = data.clusters.length;
+    document.getElementById('haplogroup-status').textContent =
+      data.clusters.some((cluster) => cluster.haplogroup && cluster.haplogroup !== 'unassigned') ? 'assigned' : 'unassigned';
+    document.getElementById('mean-depth').textContent =
+      Number(data.coverage_metrics?.mean_depth || meanCoverageDepth(data.coverage || [])).toFixed(2);
+
+    document.getElementById('theme-button').addEventListener('click', () => {
+      const current = document.documentElement.dataset.theme;
+      document.documentElement.dataset.theme = current === 'light' ? '' : 'light';
+    });
+
+    document.getElementById('download-json').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${data.metadata.sample || 'mito'}-analysis.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('download-svg').addEventListener('click', () => {
+      const blob = new Blob([app.exportSVG()], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${data.metadata.sample || 'mito'}-circos.svg`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function meanCoverageDepth(coverage) {
+      return coverage.length === 0 ? 0 : coverage.reduce((sum, bin) => sum + Number(bin.depth || 0), 0) / coverage.length;
+    }
+
+    function passedReads() {
+      return (data.reads || []).filter((read) => !read.filtered_numt);
+    }
+
+    function summarizeSnps(reads) {
+      const denominator = Math.max(1, reads.length);
+      const byKey = new Map();
+      for (const read of reads) {
+        for (const snp of read.snps || []) {
+          const key = `${snp.position}:${snp.ref}:${snp.alt}`;
+          const row = byKey.get(key) || {
+            key,
+            label: `${snp.position} ${snp.ref}>${snp.alt}`,
+            position: Number(snp.position || 0),
+            support: 0,
+            readIds: []
+          };
+          row.support += 1;
+          row.frequency = row.support / denominator;
+          row.readIds.push(read.id);
+          byKey.set(key, row);
+        }
+      }
+      return [...byKey.values()].sort((a, b) => a.position - b.position);
+    }
+
+    function summarizeSvs(reads) {
+      const denominator = Math.max(1, reads.length);
+      const readIds = new Set(reads.map((read) => read.id));
+      return (data.svs || [])
+        .map((sv) => {
+          const supportReads = (sv.supporting_reads || []).filter((id) => readIds.has(id));
+          return {
+            sv,
+            label: `${sv.type} ${sv.start}-${sv.end}`,
+            position: Number(sv.start || 0),
+            support: supportReads.length,
+            frequency: supportReads.length / denominator,
+            readIds: supportReads
+          };
+        })
+        .filter((row) => row.support > 0)
+        .sort((a, b) => a.position - b.position);
+    }
+
+    function coordinateX(position, width) {
+      const referenceLength = Number(data.metadata?.reference_length || 16569);
+      const coordinateSpan = Math.max(1, referenceLength - 1);
+      const labelPadding = 34;
+      const axisWidth = width - labelPadding * 2;
+      const clamped = Math.max(1, Math.min(referenceLength, Number(position || 1)));
+      return labelPadding + ((clamped - 1) / coordinateSpan) * axisWidth;
+    }
+
+    function renderClusterDetails(clusterId) {
+      const cluster = (data.clusters || []).find((item) => item.id === clusterId);
+      const reads = passedReads().filter((read) => clusterId === undefined || read.cluster_id === clusterId);
+      const snps = summarizeSnps(reads);
+      const svs = summarizeSvs(reads);
+      const label = clusterId === undefined ? 'All clusters' : (cluster?.label || `H${Number(clusterId) + 1}`);
+      document.getElementById('cluster-detail-summary').textContent =
+        `${label} | ${reads.length} molecules | ${snps.length} SNP sites | ${svs.length} SV calls`;
+      renderGenomeDistribution(snps, svs);
+      renderVariantTable(snps, svs, reads.length);
+    }
+    window.renderClusterDetails = renderClusterDetails;
+
+    function renderGenomeDistribution(snps, svs) {
+      const width = 900;
+      const height = 94;
+      const labelPadding = 34;
+      const referenceLength = Number(data.metadata?.reference_length || 16569);
+      const coordinateSpan = Math.max(1, referenceLength - 1);
+      const ticks = [0, 0.25, 0.5, 0.75, 1].map((fraction) => 1 + Math.round(coordinateSpan * fraction));
+      const tickMarkup = ticks.map((position) => {
+        const x = coordinateX(position, width);
+        return `<g transform="translate(${x} 0)"><line y1="28" y2="58" stroke="#64748b"/><text y="76" text-anchor="middle" fill="#94a3b8" font-size="16">${position}</text></g>`;
+      }).join('');
+      const svMarkup = svs.map((row, index) => {
+        const x = coordinateX(row.sv.start, width);
+        const w = Math.max(4, coordinateX(row.sv.end, width) - x);
+        const fill = row.sv.known_event ? '#f97316' : '#e879f9';
+        return `<rect class="sv-band" data-fill="${fill}" x="${x}" y="${12 + index * 9}" width="${w}" height="10" rx="2" fill="${fill}" opacity="${0.42 + row.frequency * 0.55}"><title>${escapeHtml(row.label)} ${formatPercent(row.frequency)}</title></rect>`;
+      }).join('');
+      const snpMarkup = snps.map((row) => {
+        const x = coordinateX(row.position, width);
+        const color = row.label.endsWith('>T') ? '#ef4444' : row.label.endsWith('>G') ? '#f59e0b' : '#22c55e';
+        return `<g transform="translate(${x} 0)"><line y1="24" y2="60" stroke="${color}" stroke-width="${Math.max(2, 2 + row.frequency * 8)}" stroke-linecap="round"/><circle cy="42" r="3.5" fill="${color}"><title>${escapeHtml(row.label)} ${formatPercent(row.frequency)}</title></circle></g>`;
+      }).join('');
+      document.getElementById('genome-distribution').innerHTML =
+        `<svg viewBox="0 0 ${width} ${height}" aria-label="Genome distribution"><line x1="${labelPadding}" x2="${width - labelPadding}" y1="42" y2="42" stroke="#334155" stroke-width="8" stroke-linecap="round"/>${tickMarkup}${svMarkup}${snpMarkup}</svg>`;
+      document.querySelectorAll('.sv-band').forEach((node) => {
+        node.addEventListener('mouseenter', () => {
+          node.setAttribute('stroke', '#f8fafc');
+          node.setAttribute('stroke-width', '3');
+          node.setAttribute('opacity', '1');
+        });
+        node.addEventListener('mouseleave', () => {
+          node.setAttribute('stroke', 'transparent');
+          node.setAttribute('stroke-width', '0');
+          node.setAttribute('opacity', '0.68');
+        });
+      });
+    }
+
+    function renderVariantTable(snps, svs, denominator) {
+      const rows = [
+        ...snps.map((row) => ({ label: row.label, support: row.support, frequency: row.frequency, reads: row.readIds.join(', ') })),
+        ...svs.map((row) => ({ label: row.label, support: row.support, frequency: row.frequency, reads: row.readIds.join(', ') }))
+      ];
+      document.getElementById('variant-table').innerHTML =
+        `<div class="variant-grid header"><div>Mutation</div><div>Support</div><div>Frequency</div><div>Reads</div></div>` +
+        (rows.length === 0
+          ? `<div class="variant-grid"><div>No variants in selection</div><div>0/${denominator}</div><div>0.0%</div><div></div></div>`
+          : rows.map((row) =>
+              `<div class="variant-grid"><div><strong>${escapeHtml(row.label)}</strong></div><div>${row.support}/${denominator}</div><div>${formatPercent(row.frequency)}</div><div title="${escapeHtml(row.reads)}">${escapeHtml(row.reads)}</div></div>`
+            ).join(''));
+    }
+
+    function formatPercent(value) {
+      return `${(Number(value || 0) * 100).toFixed(1)}%`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    renderClusterDetails();
+  </script>
+</body>
+</html>

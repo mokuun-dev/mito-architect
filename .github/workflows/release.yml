@@ -1,0 +1,148 @@
+name: Release
+
+# Pushing a tag such as v0.5.0 runs the full CI, then publishes the container
+# image to GHCR and a GitHub release with binaries and the built web app.
+# Tags with a suffix (v0.5.0-rc.1) become pre-releases and do not move the
+# image's `latest` tag.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  archives:
+    name: Release archives
+    needs: ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install native tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ pkg-config libhts-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Check that the tag matches the crate version
+        run: |
+          version="$(cargo metadata --no-deps --format-version 1 --locked \
+            | jq -r '.packages[] | select(.name == "mito-cli") | .version')"
+          if [[ "${GITHUB_REF_NAME#v}" != "$version" ]]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match mito-cli version $version"
+            exit 1
+          fi
+
+      - name: Build
+        run: |
+          cargo build --release --locked -p mito-cli -p mito-server
+          npm ci
+          npm run build
+
+      - name: Package
+        run: |
+          bin_dir="mito-architect-${GITHUB_REF_NAME}-linux-x86_64"
+          web_dir="mito-architect-${GITHUB_REF_NAME}-web"
+          mkdir -p "dist/$bin_dir/bin"
+          install -m 0755 -s target/release/mito-cli target/release/mito-server "dist/$bin_dir/bin/"
+          cp -r core/data "dist/$bin_dir/data"
+          rm -f "dist/$bin_dir/data/rcrs.fasta.fai"
+          cp LICENSE README.md "dist/$bin_dir/"
+          cp -r web/dist "dist/$web_dir"
+          tar -C dist -czf "dist/$bin_dir.tar.gz" "$bin_dir"
+          tar -C dist -czf "dist/$web_dir.tar.gz" "$web_dir"
+          (cd dist && sha256sum ./*.tar.gz > SHA256SUMS)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-archives
+          path: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          if-no-files-found: error
+
+  image:
+    name: Container image
+    needs: ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+
+  release:
+    name: GitHub release
+    needs: [archives, image]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-archives
+          path: dist
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_REF_NAME#v}"
+          cat > notes.md <<EOF
+          Container image: \`docker pull ${image}\`
+
+          The Linux binaries need glibc 2.39 or newer and htslib 1.18 or newer
+          (\`libhts3\`/\`libhts3t64\`). Point them at the bundled resources with
+          \`export MITO_DATA_DIR=<unpacked directory>/data\`. The web archive is
+          a static build that talks to the API at http://127.0.0.1:8080.
+          EOF
+          flags=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Mito-Architect $GITHUB_REF_NAME" \
+            --notes-file notes.md \
+            --generate-notes \
+            --verify-tag \
+            "${flags[@]}"
