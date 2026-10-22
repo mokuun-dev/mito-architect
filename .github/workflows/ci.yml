@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+  schedule:
+    # Weekly run so new advisories against unchanged dependencies surface.
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  # Ubuntu 24.04 ships htslib 1.19; the core needs 1.18 or newer.
+  NATIVE_PACKAGES: cmake g++ pkg-config libhts-dev
+
+jobs:
+  verify:
+    name: Verification gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install native tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends $NATIVE_PACKAGES \
+            samtools bcftools tabix minimap2 jq
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+      - name: Fetch dependencies
+        run: |
+          cargo fetch --locked
+          npm ci
+
+      # Native, Rust, web, fixture, determinism, and benchmark checks.
+      - name: Run scripts/verify.sh
+        run: bash scripts/verify.sh
+
+  msrv:
+    name: Rust 1.85 (MSRV)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install native tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends $NATIVE_PACKAGES
+
+      - uses: dtolnay/rust-toolchain@1.85.0
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check workspace
+        run: cargo check --workspace --all-targets --locked
+
+  sanitizers:
+    name: C++ ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ASan + UBSan
+            sanitize: address,undefined
+          - name: TSan
+            sanitize: thread
+    env:
+      ASAN_OPTIONS: detect_leaks=0:strict_string_checks=1
+      UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+      TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install native tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends $NATIVE_PACKAGES
+
+      # Recent runner kernels randomise mmap with more bits than the
+      # sanitizer runtimes expect.
+      - name: Reduce mmap randomisation
+        run: sudo sysctl vm.mmap_rnd_bits=28
+
+      - name: Configure
+        run: |
+          flags="-O1 -g -fno-omit-frame-pointer -fsanitize=${{ matrix.sanitize }}"
+          cmake -S . -B build-sanitize -DCMAKE_BUILD_TYPE=Debug -DMITO_BUILD_TESTS=ON \
+            -DCMAKE_C_FLAGS="$flags" -DCMAKE_CXX_FLAGS="$flags" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=${{ matrix.sanitize }}"
+
+      - name: Build
+        run: cmake --build build-sanitize -j"$(nproc)"
+
+      - name: Test
+        run: ctest --test-dir build-sanitize --output-on-failure
+
+  container:
+    name: Container image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: mito-architect:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-test image
+        run: bash scripts/verify_container.sh mito-architect:ci
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      # Runtime dependencies only. ngl pulls in sprintf-js, which has a
+      # moderate advisory and no fixed release; the app never passes
+      # user-controlled format strings to it.
+      - name: npm audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: cargo audit
+        run: cargo audit
