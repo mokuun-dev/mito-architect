@@ -1,12 +1,5 @@
-import {
-  Activity,
-  ArrowRight,
-  DatabaseZap,
-  FileStack,
-  GitBranch,
-  Layers3,
-  ShieldCheck
-} from 'lucide-react';
+import { ArrowRight, FileStack, GitBranch, Layers3, ScanLine, ShieldCheck } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UploadZone from '../components/UploadZone';
 import { demoData } from '../lib/demoData';
@@ -19,104 +12,93 @@ export default function Home() {
   const setData = useMitoStore((state) => state.setData);
   const setJobId = useMitoStore((state) => state.setJobId);
 
+  function openDemo() {
+    setData(demoData);
+    setJobId('demo');
+    setSelectedFile(undefined);
+    navigate('/result/demo');
+  }
+
   return (
-    <main id="main-content" className="page-shell surface-grid">
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="grid content-start gap-5">
-          <section className="lab-panel overflow-hidden p-5">
-            <div className="section-kicker">Long-read mitochondrial genomics</div>
-            <h1 className="mt-2 max-w-4xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Исследуйте митохондриальный геном от варианта до молекулы.
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted sm:text-base sm:leading-7">
-              В базовом режиме изучайте покрытие и наблюдаемые события. Расширенный режим
-              связывает события с молекулами и строит кандидаты архитектур с явными ограничениями.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2" aria-label="Core analysis projections">
-              <span className="status-pill"><Activity className="h-3.5 w-3.5 text-aqua" aria-hidden />Variant-centric</span>
-              <span className="status-pill"><GitBranch className="h-3.5 w-3.5 text-sky" aria-hidden />Molecule-centric</span>
-              <span className="status-pill"><Layers3 className="h-3.5 w-3.5 text-magenta" aria-hidden />Architecture-centric</span>
-            </div>
-          </section>
+    <main id="main-content" className="page-shell">
+      <section className="max-w-3xl">
+        <p className="section-kicker text-accent">Long-read mitochondrial genomics</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-[40px] sm:leading-[1.15]">
+          From aligned reads to variants, molecules, and rearrangements.
+        </h1>
+        <p className="mt-3 text-[15px] leading-7 text-muted">
+          Upload a long-read alignment of human mtDNA. Mito-Architect reports coverage, heteroplasmic
+          variants with callable denominators, structural events, and haplogroups, and links each
+          finding back to the molecules that support it.
+        </p>
+      </section>
 
-          <UploadZone
-            onFile={(file, evidenceGraph) => {
-              setSelectedEvidenceGraph(evidenceGraph);
-              setSelectedFile(file);
-              navigate('/upload');
-            }}
-          />
-        </div>
+      <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <UploadZone
+          onFile={(file, evidenceGraph) => {
+            setSelectedEvidenceGraph(evidenceGraph);
+            setSelectedFile(file);
+            navigate('/upload');
+          }}
+        />
 
-        <aside className="grid content-start gap-4" aria-label="Analysis overview">
-          <button
-            type="button"
-            onClick={() => {
-              setData(demoData);
-              setJobId('demo');
-              setSelectedFile(undefined);
-              navigate('/result/demo');
-            }}
-            className="glass-panel group rounded-xl border border-line p-4 text-left shadow-tool hover:border-aqua hover:shadow-focus"
-          >
-            <span className="flex items-center justify-between gap-3">
+        <aside className="grid content-start gap-4" aria-label="Getting started">
+          <button type="button" onClick={openDemo} className="card group p-5 text-left hover:border-accent/50">
+            <span className="flex items-start justify-between gap-4">
               <span>
-                <span className="section-kicker">Annotated sandbox</span>
-                <span className="mt-1 block text-base font-semibold">Open the traceable demo</span>
-                <span className="mt-1 block text-xs leading-5 text-muted">Explore rCRS variants, SV evidence, phasing, clinical assertions, and protein mapping without uploading data.</span>
+                <span className="block text-[15px] font-semibold">Explore the demo result</span>
+                <span className="mt-1 block text-[13px] leading-5 text-muted">
+                  Variants, structural events, haplogroups, clinical assertions, and protein mapping on a small bundled sample.
+                </span>
               </span>
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-aqua/40 bg-aqua/10 text-aqua transition-transform group-hover:translate-x-0.5">
-                <ArrowRight className="h-5 w-5" aria-hidden />
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent transition-transform group-hover:translate-x-0.5">
+                <ArrowRight className="h-4 w-4" aria-hidden />
               </span>
             </span>
           </button>
 
-          <div className="glass-panel rounded-xl border border-line p-4 shadow-tool">
-            <div className="section-kicker mb-3">Evidence model</div>
-            <div className="grid gap-2" aria-label="Evidence processing stages">
-              <EvidenceStep index="01" label="Alignment evidence" detail="Primary + supplementary records" />
-              <EvidenceStep index="02" label="Callable observations" detail="ALT, REF, absent, ambiguous" />
-              <EvidenceStep index="03" label="Linked projections" detail="Variants, molecules, architectures" />
-            </div>
-          </div>
+          <section className="card p-5" aria-labelledby="how-it-works">
+            <h2 id="how-it-works" className="text-[15px] font-semibold">How it works</h2>
+            <ol className="mt-4 grid gap-4">
+              <Step index={1} title="Read alignment evidence" detail="Primary and supplementary records are assembled into molecules." />
+              <Step index={2} title="Classify observations" detail="Each position is ALT, REF, absent, or ambiguous on every molecule." />
+              <Step index={3} title="Project the results" detail="Variants, molecules, and architectures stay linked to their evidence." />
+            </ol>
+          </section>
 
-          <div className="glass-panel rounded-xl border border-line p-4 shadow-tool">
-            <div className="section-kicker mb-3">Analysis capabilities</div>
-            <div className="grid gap-2">
-              <SignalRow icon={<FileStack className="h-4 w-4" />} label="FASTQ / SAM / BAM / CRAM" status="native" />
-              <SignalRow icon={<ShieldCheck className="h-4 w-4" />} label="NUMT assessability" status="explicit" />
-              <SignalRow icon={<Activity className="h-4 w-4" />} label="SNV + indel + complex SV" status="linked" />
-              <SignalRow icon={<DatabaseZap className="h-4 w-4" />} label="Versioned annotations" status="provenance" />
-            </div>
-          </div>
+          <section className="card p-5" aria-labelledby="capabilities">
+            <h2 id="capabilities" className="text-[15px] font-semibold">Capabilities</h2>
+            <ul className="mt-3 grid gap-2.5 text-[13px]">
+              <Capability icon={<FileStack className="h-4 w-4" />}>SAM, BAM, CRAM, and FASTQ input</Capability>
+              <Capability icon={<ScanLine className="h-4 w-4" />}>SNVs, small indels, and complex SVs</Capability>
+              <Capability icon={<GitBranch className="h-4 w-4" />}>Molecule-level phasing</Capability>
+              <Capability icon={<Layers3 className="h-4 w-4" />}>Candidate molecular architectures</Capability>
+              <Capability icon={<ShieldCheck className="h-4 w-4" />}>Explicit NUMT assessability</Capability>
+            </ul>
+          </section>
         </aside>
-      </section>
+      </div>
     </main>
   );
 }
 
-function SignalRow({ icon, label, status }: { icon: JSX.Element; label: string; status: string }) {
+function Step({ index, title, detail }: { index: number; title: string; detail: string }) {
   return (
-    <div className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-line bg-panel2 px-3 py-2">
-      <span className="flex items-center gap-2 text-sm">
-        <span className="text-aqua">{icon}</span>
-        {label}
+    <li className="grid grid-cols-[28px_minmax(0,1fr)] gap-3">
+      <span className="grid h-7 w-7 place-items-center rounded-full border border-line bg-panel2 font-mono text-xs font-semibold text-muted">{index}</span>
+      <span>
+        <span className="block text-[13px] font-semibold">{title}</span>
+        <span className="mt-0.5 block text-[13px] leading-5 text-muted">{detail}</span>
       </span>
-      <span className="font-mono text-[11px] text-muted">{status}</span>
-    </div>
+    </li>
   );
 }
 
-function EvidenceStep({ index, label, detail }: { index: string; label: string; detail: string }) {
+function Capability({ icon, children }: { icon: ReactNode; children: string }) {
   return (
-    <div className="grid grid-cols-[36px_minmax(0,1fr)] gap-3 rounded-lg border border-line bg-panel2 p-3">
-      <span className="grid h-9 w-9 place-items-center rounded-md border border-aqua/30 bg-aqua/10 font-mono text-xs font-semibold text-aqua">
-        {index}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold">{label}</span>
-        <span className="mt-0.5 block text-xs leading-5 text-muted">{detail}</span>
-      </span>
-    </div>
+    <li className="flex items-center gap-2.5">
+      <span className="text-accent" aria-hidden>{icon}</span>
+      {children}
+    </li>
   );
 }

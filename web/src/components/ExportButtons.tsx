@@ -1,5 +1,6 @@
 import type { MitoAnalysisData } from '@mito-architect/visualization-lib';
-import { Download, FileJson, Table } from 'lucide-react';
+import { ChevronDown, Download, FileCode2, FileJson, Table } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { downloadReportUrl, downloadResultJsonUrl } from '../lib/api';
 
 interface ExportButtonsProps {
@@ -10,13 +11,7 @@ interface ExportButtonsProps {
 
 export default function ExportButtons({ jobId, jsonData, htmlAvailable = true }: ExportButtonsProps) {
   function downloadJson() {
-    const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `mito-${jobId}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(JSON.stringify(jsonData, null, 2), 'application/json', `mito-${jobId}.json`);
   }
 
   function downloadVariantTsv() {
@@ -50,44 +45,51 @@ export default function ExportButtons({ jobId, jsonData, htmlAvailable = true }:
   }
 
   return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Export analysis result">
-      {htmlAvailable ? (
-        <a
-          href={downloadResultJsonUrl(jobId)}
-          download={`mito-${jobId}.json`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-panel2 px-3 py-2 text-sm font-semibold hover:border-aqua hover:text-aqua"
+    <details className="relative">
+      <summary className="btn-primary list-none">
+        <Download className="h-4 w-4" aria-hidden />
+        Export
+        <ChevronDown className="h-4 w-4 opacity-80" aria-hidden />
+      </summary>
+      <div className="popover right-0 top-[calc(100%+6px)] w-64 py-1" role="group" aria-label="Export analysis result">
+        {htmlAvailable ? (
+          <MenuLink href={downloadResultJsonUrl(jobId)} download={`mito-${jobId}.json`} icon={<FileJson className="h-4 w-4" />} detail="Complete result document">Full JSON</MenuLink>
+        ) : (
+          <MenuButton onClick={downloadJson} icon={<FileJson className="h-4 w-4" />} detail="Complete result document">JSON</MenuButton>
+        )}
+        <MenuButton
+          onClick={downloadVariantTsv}
+          icon={<Table className="h-4 w-4" />}
+          detail={jsonData.variants ? 'Variants with denominators' : 'Requires aggregate variants'}
+          disabled={!jsonData.variants}
         >
-          <FileJson className="h-4 w-4" aria-hidden />
-          Full JSON
-        </a>
-      ) : (
-        <button
-          type="button"
-          onClick={downloadJson}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-panel2 px-3 py-2 text-sm font-semibold hover:border-aqua hover:text-aqua"
-        >
-          <FileJson className="h-4 w-4" aria-hidden />
-          JSON
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={downloadVariantTsv}
-        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-panel2 px-3 py-2 text-sm font-semibold hover:border-aqua hover:text-aqua"
-      >
-        <Table className="h-4 w-4" aria-hidden />
-        Variant TSV
-      </button>
-      {htmlAvailable && (
-        <a
-          href={downloadReportUrl(jobId)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-panel2 px-3 py-2 text-sm font-semibold hover:border-aqua hover:text-aqua"
-        >
-          <Download className="h-4 w-4" aria-hidden />
-          HTML
-        </a>
-      )}
-    </div>
+          Variant TSV
+        </MenuButton>
+        {htmlAvailable && (
+          <MenuLink href={downloadReportUrl(jobId)} icon={<FileCode2 className="h-4 w-4" />} detail="Self-contained report">HTML report</MenuLink>
+        )}
+      </div>
+    </details>
+  );
+}
+
+const ITEM = 'flex w-full items-start gap-3 px-3 py-2 text-left hover:bg-panel2 disabled:opacity-50 disabled:hover:bg-transparent';
+
+function MenuLink({ href, download, icon, detail, children }: { href: string; download?: string; icon: ReactNode; detail: string; children: string }) {
+  return (
+    <a href={href} download={download} className={ITEM}>
+      <span className="mt-0.5 text-muted" aria-hidden>{icon}</span>
+      <span><span className="block text-sm font-medium">{children}</span><span className="block text-xs text-muted">{detail}</span></span>
+    </a>
+  );
+}
+
+function MenuButton({ onClick, icon, detail, children, disabled }: { onClick: () => void; icon: ReactNode; detail: string; children: string; disabled?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className={ITEM}>
+      <span className="mt-0.5 text-muted" aria-hidden>{icon}</span>
+      <span><span className="block text-sm font-medium">{children}</span><span className="block text-xs text-muted">{detail}</span></span>
+    </button>
   );
 }
 

@@ -66,7 +66,7 @@ export function ClinicalPanel({ variants }: { variants: VariantSummary[] }) {
                               <>
                                 {' | '}
                                 <a
-                                  className="text-aqua underline underline-offset-2"
+                                  className="text-accent underline underline-offset-2"
                                   href={assertion.source_url}
                                   target="_blank"
                                   rel="noreferrer"

@@ -22,19 +22,24 @@ test('application shell preserves keyboard, theme, and reduced-motion contracts'
 });
 
 test('scientific visualizations retain accessible evidence fallbacks', async () => {
-  const [resultPage, viewer, modules, upload] = await Promise.all([
+  const [resultPage, genome, viewer, modules, upload, drawer] = await Promise.all([
     source('../routes/ResultPage.tsx'),
+    source('../components/genome/GenomeView.tsx'),
     source('../components/NglProteinViewer.tsx'),
     source('../components/AnalysisModulesPanel.tsx'),
-    source('../components/UploadZone.tsx')
+    source('../components/UploadZone.tsx'),
+    source('../components/inspector/DetailDrawer.tsx')
   ]);
 
   assert.match(resultPage, /id="main-content"/);
-  assert.match(resultPage, /Exact values remain available in the linked textual projections/);
+  assert.match(resultPage, /<EventsTable/);
+  assert.match(genome, /Exact values remain available in the linked textual projections/);
+  assert.match(genome, /hollow markers have\s+no callable denominator/);
   assert.match(viewer, /role="img"/);
   assert.match(viewer, /not a pathogenicity verdict/);
   assert.match(modules, /EvidencePanel/);
-  assert.match(modules, /VariantEvidenceTable/);
   assert.match(upload, /role="alert"/);
   assert.match(upload, /aria-describedby=/);
+  assert.match(drawer, /not a clinical verdict/);
+  assert.match(drawer, /are not a frequency/);
 });

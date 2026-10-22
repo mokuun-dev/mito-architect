@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, FileUp } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ProgressBar from '../components/ProgressBar';
@@ -45,14 +45,11 @@ export default function UploadPage() {
 
   if (!selectedFile && !jobId) {
     return (
-      <main id="main-content" className="page-shell grid max-w-[1100px] gap-5">
+      <main id="main-content" className="page-shell grid max-w-[960px] gap-6">
         <div>
-          <Link to="/" className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-muted hover:text-aqua">
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back to workspace
-          </Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight">Start a new analysis</h1>
-          <p className="mt-2 text-sm text-muted">Select one supported long-read input for this job.</p>
+          <BackLink>Back</BackLink>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight">Start a new analysis</h1>
+          <p className="mt-1 text-sm text-muted">Select one long-read input for this job.</p>
         </div>
         <UploadZone
           defaultEvidenceGraph={selectedEvidenceGraph}
@@ -66,26 +63,24 @@ export default function UploadPage() {
     );
   }
 
+  const schema = upload.data?.result_schema ?? (selectedEvidenceGraph ? '0.6' : '0.5');
   return (
-    <main id="main-content" className="page-shell grid max-w-[1100px] gap-5">
-      <Link to="/" className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md text-sm text-muted hover:text-aqua">
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        New analysis
-      </Link>
-      <section className="lab-panel p-5 sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <main id="main-content" className="page-shell grid max-w-[960px] gap-6">
+      <BackLink>New analysis</BackLink>
+      <section className="card flex flex-wrap items-center justify-between gap-4 p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-panel2 text-muted">
+            <FileText className="h-5 w-5" aria-hidden />
+          </span>
           <div className="min-w-0">
-            <div className="section-kicker">Active job</div>
-            <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight">{selectedFile?.name ?? `Job ${jobId}`}</h1>
-            <p className="mt-2 text-sm text-muted">
-              Режим {upload.data?.result_schema ?? (selectedEvidenceGraph ? '0.6' : '0.5')} · проверка входа и воспроизводимый результат.
+            <h1 className="truncate text-lg font-semibold tracking-tight">{selectedFile?.name ?? `Job ${jobId}`}</h1>
+            <p className="mt-0.5 text-[13px] text-muted">
+              {selectedFile ? formatBytes(selectedFile.size) + ' · ' : ''}
+              {schema === '0.6' ? 'Evidence graph' : 'Standard'} analysis · schema {schema}
             </p>
           </div>
-          <span className="status-pill shrink-0">
-            <FileUp className="h-4 w-4 text-aqua" aria-hidden />
-            {selectedFile ? formatBytes(selectedFile.size) : 'uploaded'}
-          </span>
         </div>
+        {jobId && <span className="badge-neutral font-mono">{jobId}</span>}
       </section>
       <ProgressBar
         status={status.data?.status ?? (upload.isError ? 'error' : upload.isPending ? 'queued' : 'processing')}
@@ -93,6 +88,15 @@ export default function UploadPage() {
         error={(upload.error as Error | undefined)?.message ?? status.data?.error?.message}
       />
     </main>
+  );
+}
+
+function BackLink({ children }: { children: string }) {
+  return (
+    <Link to="/" className="inline-flex w-fit items-center gap-1.5 rounded-lg text-sm font-medium text-muted hover:text-text">
+      <ArrowLeft className="h-4 w-4" aria-hidden />
+      {children}
+    </Link>
   );
 }
 

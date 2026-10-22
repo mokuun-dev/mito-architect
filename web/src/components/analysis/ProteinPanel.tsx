@@ -51,7 +51,7 @@ export function ProteinPanel({ variants }: { variants: VariantSummary[] }) {
                   }}
                   className={[
                     'min-h-11 w-full border-b px-3 py-2 text-left text-sm last:border-0',
-                    selected?.key === variant.key ? 'border-aqua bg-aqua/10' : 'border-line hover:bg-panel'
+                    selected?.key === variant.key ? 'border-accent bg-accent/10' : 'border-line hover:bg-panel'
                   ].join(' ')}
                 >
                   <div className="font-semibold">{variant.protein ?? variant.gene}</div>
@@ -113,10 +113,10 @@ export function MoleculeDistribution({ variant }: { variant: VariantSummary }) {
             <div key={clusterId} className="rounded border border-line bg-panel2 px-2.5 py-2 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-text">{clusterId < 0 ? 'Outliers' : `Cluster ${clusterId + 1}`}</span>
-                <span className="text-aqua">n={count}</span>
+                <span className="text-accent">n={count}</span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-shell">
-                <div className="h-full rounded-full bg-aqua" style={{ width: `${(count / maximum) * 100}%` }} />
+                <div className="h-full rounded-full bg-accent" style={{ width: `${(count / maximum) * 100}%` }} />
               </div>
             </div>
           ))}

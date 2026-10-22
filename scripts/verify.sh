@@ -30,6 +30,10 @@ npm run build
 node web/src/lib/proteinStructureSources.test.mjs
 node web/src/lib/analysisNavigation.test.mjs
 node web/src/lib/interfaceContract.test.mjs
+node web/src/lib/eventRows.test.mjs
+node web/src/lib/coverageModel.test.mjs
+node visualization-lib/src/circular/coordinates.test.mjs
+node visualization-lib/src/circular/dataAdapter.test.mjs
 bash scripts/verify_resources.sh
 bash scripts/verify_rc1_evidence.sh
 

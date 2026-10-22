@@ -67,14 +67,14 @@ export default function ClusterMutationPanel({ data }: ClusterMutationPanelProps
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-4 py-3">
         <div>
           <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Crosshair className="h-4 w-4 text-aqua" aria-hidden />
+            <Crosshair className="h-4 w-4 text-accent" aria-hidden />
             Cluster Mutation Drill-Down
           </h2>
           <p className="mt-1 text-sm text-muted">
             {label} | {summary.reads.length} molecules | frequencies are within the current selection
           </p>
         </div>
-        <div className="rounded-md border border-line bg-panel2 px-3 py-2 text-sm font-semibold text-aqua">
+        <div className="rounded-md border border-line bg-panel2 px-3 py-2 text-sm font-semibold text-accent">
           {selectedCluster === undefined ? 'Global view' : 'Selected from plot/sidebar'}
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function ClusterMutationPanel({ data }: ClusterMutationPanelProps
         <div className="grid content-start gap-4">
           <div className="rounded-lg border border-line bg-panel2 p-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold">
-              <Dna className="h-4 w-4 text-aqua" aria-hidden />
+              <Dna className="h-4 w-4 text-accent" aria-hidden />
               Cluster Signature
             </h3>
             <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
@@ -159,7 +159,7 @@ export default function ClusterMutationPanel({ data }: ClusterMutationPanelProps
                     className={[
                       'min-h-11 w-full border-b px-3 py-2 text-left text-sm last:border-0',
                       selectedSvId === item.sv.id
-                        ? 'border-aqua bg-aqua/10'
+                        ? 'border-accent bg-accent/10'
                         : 'border-line hover:bg-panel2'
                     ].join(' ')}
                   >
@@ -264,7 +264,7 @@ function GenomeDistribution({
     <div className="rounded-lg border border-line bg-panel2 p-3">
       <div className="mb-2 flex items-center justify-between gap-3 text-sm">
         <h3 className="flex items-center gap-2 font-semibold">
-          <LocateFixed className="h-4 w-4 text-aqua" aria-hidden />
+          <LocateFixed className="h-4 w-4 text-accent" aria-hidden />
           Genome Distribution
         </h3>
         <span className="text-xs text-muted">rCRS coordinates, 1-{referenceLength}</span>

@@ -97,7 +97,7 @@ export function RemoteEvidenceSearch({
               ))}
             </select>
           </label>
-          <button type="submit" className="min-h-10 self-end rounded-lg border border-aqua bg-aqua/10 px-3 py-2 text-sm font-semibold text-aqua">
+          <button type="submit" className="min-h-10 self-end rounded-lg border border-accent bg-accent/10 px-3 py-2 text-sm font-semibold text-accent">
             Apply
           </button>
           <button

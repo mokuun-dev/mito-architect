@@ -120,7 +120,7 @@ export function ArchitectureCard({
                   key={eventId}
                   type="button"
                   onClick={() => onEventSelect(eventId)}
-                  className="min-h-9 max-w-full truncate rounded-lg border border-aqua/40 bg-panel2 px-2 py-1 font-mono text-xs text-aqua hover:border-aqua"
+                  className="min-h-9 max-w-full truncate rounded-lg border border-accent/40 bg-panel2 px-2 py-1 font-mono text-xs text-accent hover:border-accent"
                   title={`Inspect ${eventId} in Molecules & phase`}
                 >
                   {eventId}
@@ -139,7 +139,7 @@ export function ArchitectureCard({
                   key={eventId}
                   type="button"
                   onClick={() => onEventSelect(eventId)}
-                  className="min-h-9 max-w-full truncate rounded-lg border border-line bg-panel2 px-2 py-1 font-mono text-xs text-muted hover:border-aqua hover:text-aqua"
+                  className="min-h-9 max-w-full truncate rounded-lg border border-line bg-panel2 px-2 py-1 font-mono text-xs text-muted hover:border-accent hover:text-accent"
                 >
                   {eventId}
                 </button>
@@ -157,7 +157,7 @@ export function ArchitectureCard({
               </div>
               {architecture.event_profile.map((profile) => (
                 <div key={profile.event_id} className="grid min-w-[720px] grid-cols-[minmax(260px,1.5fr)_90px_90px_90px_110px_100px] gap-2 border-b border-line/60 py-2 last:border-0">
-                  <button type="button" onClick={() => onEventSelect(profile.event_id)} className="truncate text-left font-mono text-aqua" title={profile.event_id}>
+                  <button type="button" onClick={() => onEventSelect(profile.event_id)} className="truncate text-left font-mono text-accent" title={profile.event_id}>
                     {profile.event_id}
                   </button>
                   <div>{profile.consensus_state}</div>
@@ -186,7 +186,7 @@ export function ArchitectureCard({
                   key={moleculeId}
                   type="button"
                   onClick={() => onMoleculeSelect(moleculeId)}
-                  className="min-h-9 max-w-full truncate rounded-lg border border-line px-2 py-1 font-mono text-xs hover:border-aqua hover:text-aqua"
+                  className="min-h-9 max-w-full truncate rounded-lg border border-line px-2 py-1 font-mono text-xs hover:border-accent hover:text-accent"
                   title={`Inspect ${moleculeId} in Molecules & phase`}
                 >
                   {moleculeId}

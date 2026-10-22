@@ -1,8 +1,10 @@
 import type { LayerName, MitoAnalysisData } from '@mito-architect/visualization-lib';
 import { create } from 'zustand';
+import { DEFAULT_EVENT_FILTERS, type EventFilters } from './eventRows';
 
 type LayerMap = Record<LayerName, boolean>;
-export type AnalysisModule = 'overview' | 'coverage' | 'variants' | 'evidence' | 'architectures' | 'rearrangements' | 'haplogroups' | 'clinical' | 'protein' | 'method';
+export type AnalysisModule = 'overview' | 'coverage' | 'evidence' | 'architectures' | 'rearrangements' | 'haplogroups' | 'clinical' | 'protein' | 'method';
+export type OverviewView = 'table' | 'genome';
 export type GenomeRegion = { start: number; end: number; label?: string };
 
 interface MitoState {
@@ -19,6 +21,8 @@ interface MitoState {
   selectedGene?: string;
   selectedRegion?: GenomeRegion;
   activeModule: AnalysisModule;
+  overviewView: OverviewView;
+  eventFilters: EventFilters;
   geneQuery: string;
   minQuality: number;
   setSelectedFile: (file?: File) => void;
@@ -34,6 +38,9 @@ interface MitoState {
   setSelectedGene: (gene?: string) => void;
   setSelectedRegion: (region?: GenomeRegion) => void;
   setActiveModule: (module: AnalysisModule) => void;
+  setOverviewView: (view: OverviewView) => void;
+  setEventFilters: (filters: Partial<EventFilters>) => void;
+  resetEventFilters: () => void;
   clearInspection: () => void;
   setGeneQuery: (query: string) => void;
   setMinQuality: (quality: number) => void;
@@ -51,6 +58,8 @@ export const useMitoStore = create<MitoState>((set) => ({
   geneQuery: '',
   minQuality: 0,
   activeModule: 'overview',
+  overviewView: 'table',
+  eventFilters: DEFAULT_EVENT_FILTERS,
   setSelectedFile: (selectedFile) => set({ selectedFile }),
   setSelectedEvidenceGraph: (selectedEvidenceGraph) => set({ selectedEvidenceGraph }),
   setJobId: (jobId) => set({ jobId }),
@@ -63,6 +72,7 @@ export const useMitoStore = create<MitoState>((set) => ({
     selectedPhaseId: undefined,
     selectedGene: undefined,
     selectedRegion: undefined,
+    eventFilters: DEFAULT_EVENT_FILTERS,
     geneQuery: '',
     minQuality: 0
   }),
@@ -81,6 +91,9 @@ export const useMitoStore = create<MitoState>((set) => ({
   setSelectedGene: (selectedGene) => set({ selectedGene, selectedEventId: undefined, selectedSvId: undefined, selectedCluster: undefined, selectedMoleculeId: undefined }),
   setSelectedRegion: (selectedRegion) => set({ selectedRegion }),
   setActiveModule: (activeModule) => set({ activeModule }),
+  setOverviewView: (overviewView) => set({ overviewView }),
+  setEventFilters: (filters) => set((state) => ({ eventFilters: { ...state.eventFilters, ...filters } })),
+  resetEventFilters: () => set({ eventFilters: DEFAULT_EVENT_FILTERS }),
   clearInspection: () => set({
     selectedCluster: undefined,
     selectedSvId: undefined,

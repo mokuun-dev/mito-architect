@@ -1,29 +1,39 @@
 import type { Config } from 'tailwindcss';
 
+const token = (name: string) => `rgb(var(--color-${name}) / <alpha-value>)`;
+
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'SFMono-Regular', 'monospace']
+        sans: ['Inter Variable', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono Variable', 'ui-monospace', 'SFMono-Regular', 'monospace']
       },
       colors: {
-        shell: 'rgb(var(--color-shell) / <alpha-value>)',
-        panel: 'rgb(var(--color-panel) / <alpha-value>)',
-        panel2: 'rgb(var(--color-panel-2) / <alpha-value>)',
-        line: 'rgb(var(--color-line) / <alpha-value>)',
-        text: 'rgb(var(--color-text) / <alpha-value>)',
-        muted: 'rgb(var(--color-muted) / <alpha-value>)',
-        aqua: 'rgb(var(--color-aqua) / <alpha-value>)',
-        sky: 'rgb(var(--color-sky) / <alpha-value>)',
-        magenta: 'rgb(var(--color-magenta) / <alpha-value>)',
-        amber: 'rgb(var(--color-amber) / <alpha-value>)',
-        coral: 'rgb(var(--color-coral) / <alpha-value>)',
-        leaf: 'rgb(var(--color-leaf) / <alpha-value>)'
+        shell: token('shell'),
+        panel: token('panel'),
+        panel2: token('panel-2'),
+        line: { DEFAULT: token('line'), strong: token('line-strong') },
+        text: token('text'),
+        muted: token('muted'),
+        subtle: token('subtle'),
+        accent: { DEFAULT: token('accent'), strong: token('accent-strong') },
+        onaccent: token('on-accent'),
+        gene: { coding: token('gene-coding'), trna: token('gene-trna'), rrna: token('gene-rrna') },
+        variant: token('variant'),
+        sv: token('sv'),
+        coverage: token('coverage'),
+        sky: token('sky'),
+        magenta: token('magenta'),
+        amber: token('amber'),
+        coral: token('coral'),
+        leaf: token('leaf')
       },
       boxShadow: {
+        card: 'var(--shadow-card)',
+        pop: 'var(--shadow-pop)',
         tool: 'var(--shadow-tool)',
         focus: 'var(--shadow-focus)'
       }

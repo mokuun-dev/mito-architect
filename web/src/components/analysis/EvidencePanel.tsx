@@ -158,7 +158,7 @@ export function EvidencePanel({ data, jobId }: { data: MitoAnalysisData; jobId?:
               className="grid min-w-[820px] w-full grid-cols-[1.05fr_0.7fr_0.65fr_1.1fr_1.4fr] gap-2 border-b border-line px-3 py-2 text-left text-sm last:border-0 hover:bg-panel2 aria-pressed:bg-panel2"
             >
               <div className="truncate font-semibold" title={item.molecule_id}>{item.molecule_id}</div>
-              <div className={molecule?.evidence_eligible && item.known ? 'text-aqua' : 'text-amber'}>{item.status}</div>
+              <div className={molecule?.evidence_eligible && item.known ? 'text-accent' : 'text-amber'}>{item.status}</div>
               <div>{item.known ? formatPercent(item.callable_fraction) : 'not assessable'}</div>
               <div className="truncate text-muted" title={protocolDecision || 'no protocol metadata'}>
                 {protocolDecision || 'default identity'}
@@ -192,7 +192,7 @@ export function EvidencePanel({ data, jobId }: { data: MitoAnalysisData; jobId?:
             <div>{event.evidence_counts.alternate}</div>
             <div>{event.evidence_counts.callable}</div>
             <div
-              className={event.assessability === 'REFERENCE_AND_ALTERNATE' ? 'text-aqua' : 'text-amber'}
+              className={event.assessability === 'REFERENCE_AND_ALTERNATE' ? 'text-accent' : 'text-amber'}
               title={event.negative_evidence_rule}
             >
               {event.assessability === 'REFERENCE_AND_ALTERNATE' ? 'complete' : 'support-only'}
@@ -207,14 +207,14 @@ export function EvidencePanel({ data, jobId }: { data: MitoAnalysisData; jobId?:
         </div>
         {phaseLinks.length === 0 ? <EmptyRow text="No phase links with co-observed alternate evidence" /> : phaseLinks.slice(0, 200).map((link) => (
           <div key={link.id} className="grid min-w-[1040px] grid-cols-[1fr_1fr_0.48fr_0.48fr_0.48fr_0.48fr_0.65fr_0.8fr] gap-2 border-b border-line px-3 py-2 text-sm last:border-0">
-            <button type="button" className="truncate text-left hover:text-aqua" title={link.event_a_id} onClick={() => { setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); setSelectedEventId(link.event_a_id); }}>{link.event_a_id}</button>
-            <button type="button" className="truncate text-left hover:text-aqua" title={link.event_b_id} onClick={() => { setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); setSelectedEventId(link.event_b_id); }}>{link.event_b_id}</button>
+            <button type="button" className="truncate text-left hover:text-accent" title={link.event_a_id} onClick={() => { setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); setSelectedEventId(link.event_a_id); }}>{link.event_a_id}</button>
+            <button type="button" className="truncate text-left hover:text-accent" title={link.event_b_id} onClick={() => { setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); setSelectedEventId(link.event_b_id); }}>{link.event_b_id}</button>
             <div>{link.jointly_callable}</div>
             <div>{link.a_alternate_b_absent}</div>
             <div>{link.a_absent_b_alternate}</div>
             <div title={phaseMoleculeTitle(link.supporting_molecule_indices, data)}>{link.both_alternate}</div>
             <div title={`uncertain n=${link.jointly_uncertain}; delta=${link.linkage_delta.toFixed(4)}`}>{formatPercent(link.co_alternate_ci95_low)}–{formatPercent(link.co_alternate_ci95_high)}</div>
-            <button type="button" aria-pressed={selected?.kind === 'phase' && selected.id === link.id} className={link.assessability === 'COMPLETE_FOR_BOTH_EVENTS' ? 'text-left text-aqua hover:underline' : 'text-left text-amber hover:underline'} onClick={() => { setSelectedEventId(undefined); setSelectedMoleculeId(undefined); setSelectedPhaseId(link.id); }}>
+            <button type="button" aria-pressed={selected?.kind === 'phase' && selected.id === link.id} className={link.assessability === 'COMPLETE_FOR_BOTH_EVENTS' ? 'text-left text-accent hover:underline' : 'text-left text-amber hover:underline'} onClick={() => { setSelectedEventId(undefined); setSelectedMoleculeId(undefined); setSelectedPhaseId(link.id); }}>
               {link.assessability === 'COMPLETE_FOR_BOTH_EVENTS' ? 'complete pair' : 'conditioned'}
             </button>
           </div>
@@ -223,7 +223,7 @@ export function EvidencePanel({ data, jobId }: { data: MitoAnalysisData; jobId?:
       <div className="data-scroll rounded-lg border border-line">
         <div className="flex items-center justify-between gap-2 border-b border-line bg-panel2 px-3 py-2 text-xs font-semibold uppercase tracking-normal text-muted">
           <span>{selected ? `${selected.kind}: ${selected.id}` : 'Evidence inspector'}</span>
-          {selected && <button type="button" className="text-aqua hover:underline" onClick={() => { setSelectedEventId(undefined); setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); }}>clear</button>}
+          {selected && <button type="button" className="text-accent hover:underline" onClick={() => { setSelectedEventId(undefined); setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); }}>clear</button>}
         </div>
         {!selected ? <EmptyRow text="Select a molecule, event, or phase endpoint to trace its evidence" /> : selectedRemoteObservations.isLoading ? (
           <EmptyRow text="Searching all immutable evidence pages…" />
@@ -240,8 +240,8 @@ export function EvidencePanel({ data, jobId }: { data: MitoAnalysisData; jobId?:
             </div>
             {selectedObservations.slice(0, 300).map((observation) => (
               <div key={observation.id} className="grid min-w-[760px] grid-cols-[1fr_1fr_0.65fr_0.8fr_1fr] gap-2 border-b border-line px-3 py-2 text-sm last:border-0">
-                <button type="button" className="truncate text-left hover:text-aqua" title={observation.molecule_id} onClick={() => { setSelectedEventId(undefined); setSelectedPhaseId(undefined); setSelectedMoleculeId(observation.molecule_id); }}>{observation.molecule_id}</button>
-                <button type="button" className="truncate text-left hover:text-aqua" title={observation.event_id} onClick={() => { setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); setSelectedEventId(observation.event_id); }}>{observation.event_id}</button>
+                <button type="button" className="truncate text-left hover:text-accent" title={observation.molecule_id} onClick={() => { setSelectedEventId(undefined); setSelectedPhaseId(undefined); setSelectedMoleculeId(observation.molecule_id); }}>{observation.molecule_id}</button>
+                <button type="button" className="truncate text-left hover:text-accent" title={observation.event_id} onClick={() => { setSelectedMoleculeId(undefined); setSelectedPhaseId(undefined); setSelectedEventId(observation.event_id); }}>{observation.event_id}</button>
                 <div>{observation.state}</div>
                 <div className="truncate" title={observation.alignment_id}>{observation.alignment_id}</div>
                 <div className="truncate text-muted" title={observation.evidence_source}>{observation.evidence_source}</div>

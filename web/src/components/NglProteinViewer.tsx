@@ -262,7 +262,7 @@ export default function NglProteinViewer({ variant }: NglProteinViewerProps) {
         {!loadedModel && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center bg-shell/55 px-8 text-center">
             <div className="max-w-sm rounded-xl border border-line bg-panel/90 px-4 py-3 text-sm text-muted shadow-tool">
-              <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-aqua shadow-focus" aria-hidden />
+              <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-accent shadow-focus" aria-hidden />
               {status}
             </div>
           </div>
@@ -279,7 +279,7 @@ export default function NglProteinViewer({ variant }: NglProteinViewerProps) {
             <dd className="mt-1">mapped variant residue</dd>
           </div>
           <div>
-            <dt className="font-semibold text-aqua">Local context</dt>
+            <dt className="font-semibold text-accent">Local context</dt>
             <dd className="mt-1">5 Å around {variant.residue ?? residueSelection ?? 'unmapped residue'}</dd>
           </div>
         </dl>
@@ -298,7 +298,7 @@ export default function NglProteinViewer({ variant }: NglProteinViewerProps) {
               </option>
             ))}
           </select>
-          <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line bg-panel2 px-3 text-xs text-muted hover:border-aqua/50">
+          <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line bg-panel2 px-3 text-xs text-muted hover:border-accent/50">
             <input
               type="checkbox"
               checked={showNeighborhood}
@@ -306,7 +306,7 @@ export default function NglProteinViewer({ variant }: NglProteinViewerProps) {
             />
             5 Å context
           </label>
-          <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line bg-panel2 px-3 text-xs text-muted hover:border-aqua/50">
+          <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line bg-panel2 px-3 text-xs text-muted hover:border-accent/50">
             <input
               type="checkbox"
               checked={showAssembly}
@@ -324,7 +324,7 @@ export default function NglProteinViewer({ variant }: NglProteinViewerProps) {
               href={loadedModel.entryUrl}
               target="_blank"
               rel="noreferrer"
-              className="ml-3 inline-flex min-h-9 items-center gap-1 rounded text-aqua hover:underline"
+              className="ml-3 inline-flex min-h-9 items-center gap-1 rounded text-accent hover:underline"
             >
               Source <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
@@ -368,7 +368,7 @@ function TextButton({
       aria-pressed={active}
       className={[
         'min-h-10 rounded-lg border px-3 py-2 text-xs font-semibold',
-        active ? 'border-aqua bg-aqua/10 text-aqua' : 'border-line bg-panel text-muted hover:border-aqua/50 hover:text-text'
+        active ? 'border-accent bg-accent/10 text-accent' : 'border-line bg-panel text-muted hover:border-accent/50 hover:text-text'
       ].join(' ')}
     >
       {children}
@@ -383,7 +383,7 @@ function IconButton({ icon, label, onClick }: { icon: JSX.Element; label: string
       title={label}
       aria-label={label}
       onClick={onClick}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-panel text-muted hover:border-aqua hover:text-aqua"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-panel text-muted hover:border-accent hover:text-accent"
     >
       {icon}
     </button>

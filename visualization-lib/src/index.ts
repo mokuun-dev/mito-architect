@@ -1,4 +1,5 @@
 import { MitoCircos } from './MitoCircos';
+export type { MitoCircosSelection } from './MitoCircos';
 
 export { MitoCircos };
 export { circularVariants, legacyEventId } from './circular/dataAdapter';

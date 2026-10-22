@@ -1,34 +1,37 @@
-import { Activity, Atom, BookOpen, ChartNoAxesCombined, Database, Dna, GitFork, LayoutDashboard, Route, ScanSearch } from 'lucide-react';
 import type { AnalysisModule } from '../../lib/store';
 
 export const MODULES = [
-  { id: 'overview', label: 'Обзор', Icon: LayoutDashboard },
-  { id: 'coverage', label: 'Качество и покрытие', Icon: Activity },
-  { id: 'variants', label: 'Варианты', Icon: Dna },
-  { id: 'evidence', label: 'Молекулы и связи', Icon: GitFork },
-  { id: 'architectures', label: 'Архитектуры', Icon: ChartNoAxesCombined },
-  { id: 'rearrangements', label: 'Перестройки', Icon: Route },
-  { id: 'haplogroups', label: 'Гаплогруппы', Icon: ScanSearch },
-  { id: 'clinical', label: 'Аннотации', Icon: Database },
-  { id: 'protein', label: 'Белковый контекст', Icon: Atom },
-  { id: 'method', label: 'Метод и источники', Icon: BookOpen }
-] as const satisfies ReadonlyArray<{ id: AnalysisModule; label: string; Icon: typeof Dna }>;
+  { id: 'overview', label: 'Overview' },
+  { id: 'coverage', label: 'Coverage & QC' },
+  { id: 'evidence', label: 'Molecules & phasing' },
+  { id: 'architectures', label: 'Architectures' },
+  { id: 'rearrangements', label: 'Rearrangements' },
+  { id: 'haplogroups', label: 'Haplogroups' },
+  { id: 'clinical', label: 'Annotations' },
+  { id: 'protein', label: 'Protein' },
+  { id: 'method', label: 'Method' }
+] as const satisfies ReadonlyArray<{ id: AnalysisModule; label: string }>;
 
-export function isAnalysisModule(value: string | null): value is AnalysisModule {
-  return MODULES.some((module) => module.id === value);
+/** Maps URL values, including retired module IDs, onto current modules. */
+export function parseAnalysisModule(value: string | null): AnalysisModule | undefined {
+  if (value === 'variants') return 'overview';
+  return MODULES.find((module) => module.id === value)?.id;
 }
 
 export function ModuleNavigation({ active, onSelect }: { active: AnalysisModule; onSelect: (module: AnalysisModule) => void }) {
-  return <nav aria-label="Разделы анализа" className="workspace-nav">
-    <div className="workspace-nav-title">Исследование</div>
-    <div className="workspace-nav-list">
-      {MODULES.map(({ id, label, Icon }) => <button
-        key={id}
-        type="button"
-        onClick={() => onSelect(id)}
-        aria-current={active === id ? 'page' : undefined}
-        className={'workspace-nav-item' + (active === id ? ' workspace-nav-item-active' : '')}
-      ><Icon className="h-[18px] w-[18px] shrink-0" aria-hidden /><span>{label}</span></button>)}
-    </div>
-  </nav>;
+  return (
+    <nav aria-label="Analysis sections" className="tabbar">
+      {MODULES.map(({ id, label }) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onSelect(id)}
+          aria-current={active === id ? 'page' : undefined}
+          className="tab"
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
+  );
 }

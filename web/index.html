@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en" class="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,12 +7,14 @@
       name="description"
       content="Mito-Architect: molecule-resolved mitochondrial DNA variant, phasing, and rearrangement analysis."
     />
-    <meta name="theme-color" content="#f4f6f8" />
-    <title>Mito-Architect · mtDNA analysis console</title>
+    <meta name="theme-color" content="#ffffff" />
+    <title>Mito-Architect · mtDNA workbench</title>
     <script>
+      // Light is the default; `?theme=dark|light` sets and remembers a theme.
       try {
-        const savedTheme = localStorage.getItem('mito-theme');
-        const useLight = savedTheme !== 'dark';
+        const requested = new URLSearchParams(location.search).get('theme');
+        if (requested === 'dark' || requested === 'light') localStorage.setItem('mito-theme', requested);
+        const useLight = localStorage.getItem('mito-theme') !== 'dark';
         document.documentElement.classList.toggle('light', useLight);
       } catch (_) {}
     </script>

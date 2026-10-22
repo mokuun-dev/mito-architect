@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import type { JobStatusValue } from '../lib/api';
 
 interface ProgressBarProps {
@@ -6,16 +7,21 @@ interface ProgressBarProps {
   error?: string | null;
 }
 
+const STAGES = [
+  { id: 'queued', label: 'Queued' },
+  { id: 'processing', label: 'Analysing' },
+  { id: 'done', label: 'Result ready' }
+] as const;
+
 export default function ProgressBar({ status = 'queued', progress = 0, error }: ProgressBarProps) {
-  const stages = ['queued', 'processing', 'done'] as const;
   const currentStage = status === 'done' ? 2 : status === 'processing' ? 1 : status === 'queued' ? 0 : -1;
   const boundedProgress = Math.max(0, Math.min(100, progress));
+  const failed = status === 'error' || status === 'cancelled' || Boolean(error);
   return (
-    <section className="lab-panel p-5 sm:p-6" aria-labelledby="analysis-progress-title" aria-live="polite">
+    <section className="card p-5 sm:p-6" aria-labelledby="analysis-progress-title" aria-live="polite">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="section-kicker">Native pipeline</div>
-          <h2 id="analysis-progress-title" className="mt-1 text-lg font-semibold">Analysis progress</h2>
+          <h2 id="analysis-progress-title" className="text-[15px] font-semibold">Analysis progress</h2>
           <p role={error ? 'alert' : 'status'} className={error ? 'mt-1 text-sm text-coral' : 'mt-1 text-sm text-muted'}>
             {error ?? statusLabel(status)}
           </p>
@@ -23,7 +29,7 @@ export default function ProgressBar({ status = 'queued', progress = 0, error }: 
         <div className="font-mono text-2xl font-semibold tabular-nums">{Math.round(boundedProgress)}%</div>
       </div>
       <div
-        className="mt-5 h-2 overflow-hidden rounded-full bg-panel2"
+        className="mt-5 h-1.5 overflow-hidden rounded-full bg-panel2"
         role="progressbar"
         aria-label="Analysis completion"
         aria-valuemin={0}
@@ -31,25 +37,29 @@ export default function ProgressBar({ status = 'queued', progress = 0, error }: 
         aria-valuenow={Math.round(boundedProgress)}
       >
         <div
-          className="h-full rounded-full bg-aqua transition-all duration-300"
+          className={'h-full rounded-full transition-all duration-300 ' + (failed ? 'bg-coral' : 'bg-accent')}
           style={{ width: `${boundedProgress}%` }}
         />
       </div>
-      <div className="mt-5 grid grid-cols-3 gap-2">
-        {stages.map((stage, index) => (
-          <div
-            key={stage}
-            className={[
-              'min-h-11 rounded-lg border px-3 py-2 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.08em]',
-              index <= currentStage
-                ? 'border-aqua/60 bg-aqua/10 text-aqua'
-                : 'border-line text-muted'
-            ].join(' ')}
-          >
-            {stage}
-          </div>
-        ))}
-      </div>
+      <ol className="mt-5 grid grid-cols-3 gap-3">
+        {STAGES.map((stage, index) => {
+          const complete = index < currentStage || status === 'done';
+          const active = index === currentStage && status !== 'done';
+          return (
+            <li key={stage.id} className="flex items-center gap-2 text-[13px]">
+              <span
+                className={[
+                  'grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px] font-semibold',
+                  complete ? 'border-accent bg-accent text-onaccent' : active ? 'border-accent text-accent' : 'border-line text-subtle'
+                ].join(' ')}
+              >
+                {complete ? <Check className="h-3 w-3" aria-hidden /> : index + 1}
+              </span>
+              <span className={complete || active ? 'font-medium text-text' : 'text-muted'}>{stage.label}</span>
+            </li>
+          );
+        })}
+      </ol>
     </section>
   );
 }
@@ -57,14 +67,14 @@ export default function ProgressBar({ status = 'queued', progress = 0, error }: 
 function statusLabel(status: JobStatusValue): string {
   switch (status) {
     case 'queued':
-      return 'Queued for background processing.';
+      return 'Waiting for an analysis slot.';
     case 'processing':
-      return 'Extracting features, calling SVs, and clustering reads.';
+      return 'Reading alignments, calling variants and structural events, and assembling molecules.';
     case 'done':
-      return 'Result is ready.';
+      return 'The result is ready.';
     case 'error':
-      return 'Analysis failed.';
+      return 'The analysis failed.';
     case 'cancelled':
-      return 'Analysis was cancelled.';
+      return 'The analysis was cancelled.';
   }
 }

@@ -10,7 +10,7 @@ services:
       MITO_ALLOW_UNAUTHENTICATED: "1"
 
   web:
-    image: node:22-bookworm
+    image: node:24-bookworm
     working_dir: /src
     command: sh -c "npm ci && npm --workspace web run dev -- --host 0.0.0.0"
     ports:

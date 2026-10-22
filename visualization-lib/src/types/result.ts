@@ -34,6 +34,8 @@ export interface MitoCircosOptions {
   showControls?: boolean;
   activeLayers?: Partial<Record<LayerName, boolean>>;
   palette?: string[];
+  /** Small navigator: no zoom, gene labels, or center label. */
+  compact?: boolean;
 }
 
 export interface LayerState {

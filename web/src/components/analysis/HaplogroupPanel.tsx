@@ -20,7 +20,7 @@ export function HaplogroupPanel({ data }: { data: MitoAnalysisData }) {
             className="grid min-w-[760px] grid-cols-[0.7fr_0.8fr_0.55fr_0.8fr_1.4fr] gap-2 border-b border-line px-3 py-2 text-sm last:border-0"
           >
             <div className="font-semibold">{cluster.label}</div>
-            <div className={cluster.haplogroup === 'unassigned' ? 'text-muted' : 'text-aqua'}>
+            <div className={cluster.haplogroup === 'unassigned' ? 'text-muted' : 'text-accent'}>
               {cluster.haplogroup ?? 'unassigned'}
               {cluster.haplogroup_assignment?.contamination_warning && (
                 <span className="ml-2 text-amber" title="Competing macrohaplogroup assignments">

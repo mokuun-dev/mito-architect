@@ -75,22 +75,22 @@ export function RearrangementsPanel({ data }: { data: MitoAnalysisData }) {
               <span>{path.junction_count}</span>
               <span>{path.segment_count}</span>
               <span>{support.length}</span>
-              <span className="text-aqua">{selected ? 'selected' : 'trace path'}</span>
+              <span className="text-accent">{selected ? 'selected' : 'trace path'}</span>
             </button>
           );
         })}
       </section>
 
       {selectedPath && (
-        <section className="overflow-hidden rounded-md border border-aqua/50" aria-labelledby="selected-path-title">
+        <section className="overflow-hidden rounded-md border border-accent/50" aria-labelledby="selected-path-title">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line bg-panel2 px-3 py-3">
             <div className="min-w-0">
               <h3 id="selected-path-title" className="font-semibold">Selected rearrangement path</h3>
-              <p className="mt-1 break-all font-mono text-xs text-aqua">{selectedPath.id}</p>
+              <p className="mt-1 break-all font-mono text-xs text-accent">{selectedPath.id}</p>
             </div>
             <button
               type="button"
-              className="text-sm text-aqua hover:underline"
+              className="text-sm text-accent hover:underline"
               onClick={() => { setSelectedPathId(undefined); setSelectedEventId(undefined); }}
             >
               Clear selection
@@ -109,11 +109,11 @@ export function RearrangementsPanel({ data }: { data: MitoAnalysisData }) {
                   const sv = data.svs.find((candidate) => candidate.id === junctionId);
                   return (
                     <li key={`${junctionId}:${index}`} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded border border-line bg-shell px-3 py-2">
-                      <span className="grid h-7 w-7 place-items-center rounded-full border border-aqua/50 text-xs text-aqua">{index + 1}</span>
+                      <span className="grid h-7 w-7 place-items-center rounded-full border border-accent/50 text-xs text-accent">{index + 1}</span>
                       <span className="min-w-0">
                         <button
                           type="button"
-                          className="block max-w-full truncate text-left font-mono text-xs hover:text-aqua"
+                          className="block max-w-full truncate text-left font-mono text-xs hover:text-accent"
                           title={junctionId}
                           onClick={() => {
                             setSelectedSvId(junctionId);
@@ -210,7 +210,7 @@ export function TraceList({
           <button
             key={value}
             type="button"
-            className="block w-full truncate rounded px-1 py-1 text-left font-mono text-xs hover:bg-panel2 hover:text-aqua"
+            className="block w-full truncate rounded px-1 py-1 text-left font-mono text-xs hover:bg-panel2 hover:text-accent"
             title={value}
             onClick={() => onSelect(value)}
           >

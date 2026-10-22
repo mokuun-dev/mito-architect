@@ -29,7 +29,6 @@ export interface VariantSummary {
 }
 
 export function summarizeVariants(reads: ReadFeature[], data: MitoAnalysisData): VariantSummary[] {
-  const denominator = Math.max(1, reads.length);
   const snps = new Map<string, VariantSummary>();
   const readClusterById = new Map(reads.map((read) => [read.id, read.cluster_id]));
 
@@ -72,7 +71,6 @@ export function summarizeVariants(reads: ReadFeature[], data: MitoAnalysisData):
       const existing = snps.get(key);
       if (existing) {
         existing.support += 1;
-        existing.frequency = existing.support / denominator;
         existing.molecules.push({ id: read.id, clusterId: read.cluster_id });
       } else {
         snps.set(key, {
@@ -81,7 +79,9 @@ export function summarizeVariants(reads: ReadFeature[], data: MitoAnalysisData):
           type: 'SNP',
           position: snp.position,
           support: 1,
-          frequency: 1 / denominator,
+          // Legacy read-level payloads carry no callable denominator, so
+          // support is not converted into a frequency.
+          frequency: Number.NaN,
           gene: snp.gene,
           consequence: snp.consequence,
           protein: snp.protein,
