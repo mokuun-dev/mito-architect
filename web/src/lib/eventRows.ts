@@ -123,8 +123,9 @@ function aggregateRow(variant: AggregateVariant, genes: GeneAnnotation[]): Event
     length: variant.length,
     ref: variant.ref,
     alt: variant.alt,
-    change: `${variant.ref}>${variant.alt}`,
-    genes: variant.gene ? [variant.gene] : genesAt(genes, variant.position, end, Number.MAX_SAFE_INTEGER),
+    change: variant.hgvs ?? `${variant.ref}>${variant.alt}`,
+    genes: effectGenes(variant)
+      ?? (variant.gene ? [variant.gene] : genesAt(genes, variant.position, end, Number.MAX_SAFE_INTEGER)),
     consequence: variant.consequence,
     hf: hasDenominator ? variant.heteroplasmy : undefined,
     ciLow: hasDenominator ? variant.ci95_low : undefined,
@@ -136,6 +137,11 @@ function aggregateRow(variant: AggregateVariant, genes: GeneAnnotation[]): Event
     clinical: clinicalLabel(variant.annotation),
     variant
   };
+}
+
+function effectGenes(variant: AggregateVariant): string[] | undefined {
+  const named = variant.effects?.flatMap((effect) => (effect.gene ? [effect.gene] : []));
+  return named && named.length > 0 ? [...new Set(named)] : undefined;
 }
 
 function legacyRows(reads: ReadFeature[], genes: GeneAnnotation[]): EventRow[] {
@@ -171,6 +177,8 @@ function legacyRows(reads: ReadFeature[], genes: GeneAnnotation[]): EventRow[] {
 }
 
 function structuralRow(sv: StructuralVariant, genes: GeneAnnotation[], length: number): EventRow {
+  const called = sv.precision;
+  const measured = called?.fraction ?? undefined;
   return {
     id: sv.id,
     kind: 'sv',
@@ -181,8 +189,14 @@ function structuralRow(sv: StructuralVariant, genes: GeneAnnotation[], length: n
     length: sv.length,
     change: `${sv.start.toLocaleString('en-US')}–${sv.end.toLocaleString('en-US')}`,
     genes: genesAt(genes, sv.start, sv.end, length),
-    altSupport: sv.supporting_reads.length,
-    qcFlags: [],
+    hf: measured,
+    ciLow: measured === undefined ? undefined : called?.ci95_low,
+    ciHigh: measured === undefined ? undefined : called?.ci95_high,
+    altSupport: called?.junction_molecules ?? sv.supporting_reads.length,
+    callable: called && measured !== undefined
+      ? Math.round(called.junction_molecules + (called.wild_type_left + called.wild_type_right) / 2)
+      : undefined,
+    qcFlags: called?.flags ?? [],
     clinical: clinicalLabel(sv.annotation),
     sv
   };

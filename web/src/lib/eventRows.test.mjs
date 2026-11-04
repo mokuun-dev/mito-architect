@@ -109,3 +109,41 @@ test('sorting keeps rows without a value last in both directions', () => {
   assert.deepEqual(sortEventRows(rows, 'hf', true).map((row) => row.position), [300, 100, 200]);
   assert.deepEqual(sortEventRows(rows, 'hf', false).map((row) => row.position), [100, 300, 200]);
 });
+
+test('a called deletion reports its measured level, and a raw one does not', () => {
+  const raw = { id: 'deletion:100-200', type: 'deletion', start: 100, end: 200, length: 101, known_event: false, supporting_reads: ['a', 'b'] };
+  const called = {
+    ...raw,
+    id: 'deletion:8483-13459',
+    start: 8483,
+    end: 13459,
+    length: 4977,
+    precision: {
+      fraction: 0.25, ci95_low: 0.2, ci95_high: 0.3, junction_molecules: 50, wild_type_left: 150, wild_type_right: 150, flags: ['direct_repeat_flanked']
+    }
+  };
+  const rows = buildEventRows({ metadata, genes, reads: [], svs: [raw, called], variants: [] });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  assert.equal(byId.get('deletion:100-200').hf, undefined);
+  assert.equal(byId.get('deletion:100-200').altSupport, 2);
+  assert.equal(byId.get('deletion:8483-13459').hf, 0.25);
+  assert.equal(byId.get('deletion:8483-13459').altSupport, 50);
+  assert.equal(byId.get('deletion:8483-13459').callable, 200);
+  assert.deepEqual(byId.get('deletion:8483-13459').qcFlags, ['direct_repeat_flanked']);
+});
+
+test('a small indel shows its HGVS description and every overlapping gene', () => {
+  const rows = buildEventRows({
+    metadata,
+    genes,
+    reads: [],
+    svs: [],
+    variants: [aggregate(8570, 'CT', 'C', {
+      type: 'SMALL_DELETION',
+      hgvs: 'm.8571del',
+      effects: [{ gene: 'MT-ATP8', biotype: 'protein_coding', consequence: 'frameshift_variant' }, { gene: 'MT-ATP6', biotype: 'protein_coding', consequence: 'frameshift_variant' }]
+    })]
+  });
+  assert.equal(rows[0].change, 'm.8571del');
+  assert.deepEqual(rows[0].genes, ['MT-ATP8', 'MT-ATP6']);
+});

@@ -237,6 +237,38 @@ void for_each_callable_mutation(const std::vector<PhyloMutation> &mutations,
   }
 }
 
+namespace {
+
+/** Members with a known callable range covering each position; members whose
+ * range is unknown count everywhere, as they cannot be ruled out. */
+[[nodiscard]] std::vector<std::size_t>
+callable_member_counts(const std::vector<const ReadFeature *> &members) {
+  const auto positions = static_cast<std::size_t>(kDefaultReferenceLength);
+  std::vector<std::int64_t> delta(positions + 2U, 0);
+  std::size_t unknown = 0U;
+  for (const auto *member : members) {
+    if (!member->haplogroup_range_known) {
+      ++unknown;
+      continue;
+    }
+    for (const auto &[start, end] : member->haplogroup_ranges) {
+      if (start >= 1U && start <= positions) {
+        delta[start] += 1;
+        delta[std::min(end, positions) + 1U] -= 1;
+      }
+    }
+  }
+  std::vector<std::size_t> counts(positions + 1U, unknown);
+  std::int64_t running = 0;
+  for (std::size_t position = 1U; position <= positions; ++position) {
+    running += delta[position];
+    counts[position] += static_cast<std::size_t>(std::max<std::int64_t>(0, running));
+  }
+  return counts;
+}
+
+} // namespace
+
 [[nodiscard]] CallablePhyloRanges
 majority_callable_ranges(const std::vector<const ReadFeature *> &members) {
   CallablePhyloRanges result;
@@ -301,7 +333,12 @@ majority_callable_ranges(const std::vector<const ReadFeature *> &members) {
            std::tie(rhs.position, rhs.delta);
   });
 
-  const auto threshold = static_cast<std::int64_t>(members.size() / 2U);
+  // A position is assessable with several molecules over it. Requiring most of
+  // the cluster would mark most of the genome NOT_CALLABLE for reads that each
+  // cover a part of it, however deep the coverage is.
+  const auto threshold = static_cast<std::int64_t>(
+      std::min(members.size() / 2U,
+               std::max<std::size_t>(2U, members.size() / 20U)));
   std::int64_t active = 0;
   std::size_t cursor = 1U;
   std::size_t event_index = 0U;
@@ -393,8 +430,17 @@ struct ClusterHaplogroupInput {
     }
   }
   auto &observed = input.observed;
+  // A marker needs a majority among molecules that could show it. Counting all
+  // members instead would read a molecule that never covered the position as
+  // evidence against the marker, and long reads rarely span the whole genome.
+  const auto callable_members = callable_member_counts(members);
   for (const auto &[_, counted] : observed_counts) {
-    if (counted.count * 2U <= members.size()) {
+    const auto position = counted.mutation.position;
+    const std::size_t denominator =
+        position < callable_members.size() && callable_members[position] != 0U
+            ? callable_members[position]
+            : members.size();
+    if (counted.count * 2U <= denominator) {
       continue;
     }
     observed.push_back(counted.mutation);

@@ -5,6 +5,17 @@
 
 namespace mito::detail {
 
+namespace {
+
+// DBSCAN work budget, in postings and candidates examined by region queries,
+// about 90 s of one core. Profiles sharing common tokens make the work
+// quadratic in the profile count. Measured peak on real and simulated runs
+// (2026-11-04): 1.4e7, on GM12878 with 2,467 profiles.
+constexpr std::uint64_t kDbscanWorkBase = 10'000'000'000ULL;
+constexpr std::uint64_t kDbscanWorkPerProfile = 0U;
+
+} // namespace
+
 [[nodiscard]] FeatureTokens feature_tokens(const ReadFeature &feature) {
   FeatureTokens tokens;
   tokens.reserve(feature.snps.size() + feature.haplogroup_markers.size() +
@@ -113,6 +124,7 @@ region_query(const std::vector<TokenProfile> &profiles,
     // overlap. Common tokens before the current one are all in both indexed
     // prefixes, so overlaps[] counts them exactly and the bound is safe.
     for (std::size_t i = 0; i < profile.prefix_length; ++i) {
+      neighborhood.work += inverted_index[profile.tokens[i]].size();
       for (const auto &posting : inverted_index[profile.tokens[i]]) {
         const auto candidate = posting.profile;
         if (scratch.marks[candidate] != epoch) {
@@ -140,6 +152,7 @@ region_query(const std::vector<TokenProfile> &profiles,
     std::sort(candidates.begin(), candidates.end());
   }
 
+  neighborhood.work += candidates.size();
   for (const auto candidate : candidates) {
     const auto lhs_size = profiles[index].tokens.size();
     const auto rhs_size = profiles[candidate].tokens.size();
@@ -282,6 +295,10 @@ void assign_dbscan_clusters(std::vector<ReadFeature> &features, double epsilon,
   // Reset after each cluster through the neighbor list, which holds every
   // queued profile, instead of allocating a fresh array per cluster.
   std::vector<unsigned char> queued(profiles.size(), 0U);
+  // Profiles that share common tokens make every region query visit every
+  // profile, which is quadratic. Real reads stay far below this budget.
+  WorkBudget budget(config, kDbscanWorkBase + kDbscanWorkPerProfile * profiles.size(),
+                    "read clustering");
 
   for (std::size_t point = 0; point < profiles.size(); ++point) {
     throw_if_cancelled(config);
@@ -291,6 +308,7 @@ void assign_dbscan_clusters(std::vector<ReadFeature> &features, double epsilon,
 
     auto neighborhood =
         region_query(profiles, inverted_index, scratch, point, epsilon);
+    budget.charge(neighborhood.work);
     if (neighborhood.read_count < min_points) {
       labels[point] = -1;
       continue;
@@ -316,6 +334,7 @@ void assign_dbscan_clusters(std::vector<ReadFeature> &features, double epsilon,
       labels[neighbor] = cluster_id;
       auto expanded =
           region_query(profiles, inverted_index, scratch, neighbor, epsilon);
+      budget.charge(expanded.work);
       if (expanded.read_count >= min_points) {
         append_new_neighbors(neighbors, queued, expanded.profiles);
       }

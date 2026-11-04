@@ -14,6 +14,8 @@ export function KpiStrip({ data, rows, onOpen }: { data: MitoAnalysisData; rows:
   const haplogroup = [...data.clusters]
     .filter((cluster) => cluster.haplogroup && cluster.haplogroup !== 'unassigned')
     .sort((a, b) => b.size - a.size)[0];
+  const consensus = data.precision_calls?.consensus_haplogroup;
+  const lineages = data.precision_calls?.haplotypes?.length ?? 0;
 
   return (
     <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line shadow-card lg:grid-cols-5" aria-label="Sample summary">
@@ -44,8 +46,10 @@ export function KpiStrip({ data, rows, onOpen }: { data: MitoAnalysisData; rows:
       <Tile
         wide
         label="Haplogroup"
-        value={haplogroup?.haplogroup ?? '—'}
-        detail={haplogroup ? `Largest of ${data.clusters.length} cluster${data.clusters.length === 1 ? '' : 's'}${haplogroup.haplogroup_assignment ? ` · score ${haplogroup.haplogroup_assignment.quality.toFixed(1)}` : ''}` : 'Not assigned'}
+        value={consensus?.best ?? haplogroup?.haplogroup ?? '—'}
+        detail={consensus
+          ? `${lineages > 1 ? `${lineages} phased lineages` : 'One phased lineage'} · score ${consensus.quality.toFixed(1)}`
+          : haplogroup ? `Largest of ${data.clusters.length} cluster${data.clusters.length === 1 ? '' : 's'}${haplogroup.haplogroup_assignment ? ` · score ${haplogroup.haplogroup_assignment.quality.toFixed(1)}` : ''}` : 'Not assigned'}
         onClick={() => onOpen('haplogroups')}
       />
     </section>

@@ -71,6 +71,7 @@ pub(super) fn analyze(args: AnalyzeArgs) -> Result<()> {
                 max_input_records: args.max_input_records,
                 max_input_bases: args.max_input_bases,
                 allow_external_cram_references: args.allow_external_cram_references,
+                compact_result_min_molecules: args.compact_min_molecules,
                 evidence_page_size: args.evidence_page_size,
                 min_architecture_molecules: args.min_architecture_molecules,
                 max_candidate_architectures: args.max_candidate_architectures,

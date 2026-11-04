@@ -117,6 +117,7 @@ impl MitoEngine {
             max_input_records: options.max_input_records,
             max_input_bases: options.max_input_bases,
             allow_external_cram_references: options.allow_external_cram_references,
+            compact_result_min_molecules: options.compact_result_min_molecules,
         };
         let result = unsafe {
             mito_engine_analyze_with_options_v1(

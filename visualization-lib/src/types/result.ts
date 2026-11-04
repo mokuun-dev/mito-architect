@@ -3,6 +3,7 @@ import type { StructuralVariant, ComplexStructuralEvent, AggregateVariant } from
 import type { CoverageMetrics, ReadFeature, ClusterSummary } from './reads';
 import type { AlignmentFragment, AssembledMolecule, MoleculeCallability, EvidenceEvent, EvidenceObservation, EvidenceObservationPage, EvidenceEncoding, PhaseLink } from './evidence';
 import type { MolecularArchitecture, ArchitectureInferenceSummary } from './architectures';
+import type { PrecisionCalls } from './precision';
 
 export interface MitoAnalysisData {
   metadata: MitoMetadata;
@@ -25,6 +26,8 @@ export interface MitoAnalysisData {
   phase_links?: PhaseLink[];
   architecture_inference?: ArchitectureInferenceSummary;
   architectures?: MolecularArchitecture[];
+  /** Statistically filtered calls; absent on results from older engines. */
+  precision_calls?: PrecisionCalls;
 }
 
 export interface MitoCircosOptions {

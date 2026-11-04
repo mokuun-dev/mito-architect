@@ -60,6 +60,7 @@ fn test_state(api_key: Option<&str>) -> AppState {
         max_upload_bytes: 1024 * 1024,
         max_input_records: 1_000_000,
         max_input_bases: 1_000_000_000,
+        compact_result_min_molecules: 0,
         max_stored_jobs: 64,
         max_stored_bytes: 64 * 1024 * 1024,
         tmp_dir,

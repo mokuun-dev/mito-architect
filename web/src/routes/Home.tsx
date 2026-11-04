@@ -1,23 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, FileStack, GitBranch, Layers3, ScanLine, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import UploadZone from '../components/UploadZone';
-import { demoData } from '../lib/demoData';
+import { fetchDemoIndex, platformLabel } from '../lib/demoPanel';
 import { useMitoStore } from '../lib/store';
 
 export default function Home() {
   const navigate = useNavigate();
   const setSelectedFile = useMitoStore((state) => state.setSelectedFile);
   const setSelectedEvidenceGraph = useMitoStore((state) => state.setSelectedEvidenceGraph);
-  const setData = useMitoStore((state) => state.setData);
-  const setJobId = useMitoStore((state) => state.setJobId);
-
-  function openDemo() {
-    setData(demoData);
-    setJobId('demo');
-    setSelectedFile(undefined);
-    navigate('/result/demo');
-  }
+  const panel = useQuery({ queryKey: ['demo-index'], queryFn: ({ signal }) => fetchDemoIndex(signal), staleTime: Infinity });
 
   return (
     <main id="main-content" className="page-shell">
@@ -43,20 +36,6 @@ export default function Home() {
         />
 
         <aside className="grid content-start gap-4" aria-label="Getting started">
-          <button type="button" onClick={openDemo} className="card group p-5 text-left hover:border-accent/50">
-            <span className="flex items-start justify-between gap-4">
-              <span>
-                <span className="block text-[15px] font-semibold">Explore the demo result</span>
-                <span className="mt-1 block text-[13px] leading-5 text-muted">
-                  Variants, structural events, haplogroups, clinical assertions, and protein mapping on a small bundled sample.
-                </span>
-              </span>
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent transition-transform group-hover:translate-x-0.5">
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </span>
-            </span>
-          </button>
-
           <section className="card p-5" aria-labelledby="how-it-works">
             <h2 id="how-it-works" className="text-[15px] font-semibold">How it works</h2>
             <ol className="mt-4 grid gap-4">
@@ -78,6 +57,37 @@ export default function Home() {
           </section>
         </aside>
       </div>
+
+      <section className="mt-10" aria-labelledby="demo-panel-title">
+        <div className="max-w-3xl">
+          <h2 id="demo-panel-title" className="text-xl font-semibold tracking-tight">Explore example samples</h2>
+          <p className="mt-1.5 text-[13px] leading-6 text-muted">
+            Actual engine output for mitochondrial genomes of different people from public records, on simulated long reads, plus one real nanopore run.
+            Clinical variants and large deletions are added in silico; they are not findings about those people.
+          </p>
+        </div>
+        {panel.isError ? (
+          <p className="notice-warning mt-4" role="status">{(panel.error as Error).message}</p>
+        ) : (
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {panel.data?.samples.map((sample) => (
+              <li key={sample.id}>
+                <Link to={`/result/demo?sample=${encodeURIComponent(sample.id)}`} className="card group flex h-full flex-col gap-2 p-4 hover:border-accent/50">
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="text-[14px] font-semibold">{sample.title}</span>
+                    <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-0.5" aria-hidden />
+                  </span>
+                  <span className="text-[13px] leading-5 text-muted">{sample.summary}</span>
+                  <span className="mt-auto flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className={sample.simulated ? 'badge-neutral' : 'badge-warning'}>{sample.simulated ? platformLabel(sample.platform) : 'Real reads'}</span>
+                    {sample.haplogroup && <span className="badge-neutral font-mono">{sample.haplogroup}</span>}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }

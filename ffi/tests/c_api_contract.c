@@ -53,7 +53,9 @@ static int check_options_layout(void) {
   REQUIRE(offsetof(mito_engine_analyze_options_v1, max_input_bases) == 216);
   REQUIRE(offsetof(mito_engine_analyze_options_v1, allow_external_cram_references) == 224);
   REQUIRE(MITO_ENGINE_ANALYZE_OPTIONS_V1_BASE_SIZE == 208);
-  REQUIRE(sizeof(mito_engine_analyze_options_v1) == 232);
+  REQUIRE(offsetof(mito_engine_analyze_options_v1, compact_result_min_molecules) == 232);
+  REQUIRE(MITO_ENGINE_ANALYZE_OPTIONS_V1_INPUT_LIMITS_SIZE == 232);
+  REQUIRE(sizeof(mito_engine_analyze_options_v1) == 240);
 #endif
   return 0;
 }
@@ -103,6 +105,12 @@ int main(int argc, char **argv) {
       mito_engine_analyze_with_options_v1(engine, argv[1], NULL, &config);
   REQUIRE(base_layout != NULL && strcmp(first, base_layout) == 0);
   mito_engine_free_string(base_layout);
+  /* The layout that ended at the input limits is still accepted and reads them. */
+  mito_engine_analyze_options_v1_init(&config);
+  config.struct_size = (uint32_t)MITO_ENGINE_ANALYZE_OPTIONS_V1_INPUT_LIMITS_SIZE;
+  config.max_input_records = 1;
+  REQUIRE(mito_engine_analyze_with_options_v1(engine, argv[1], NULL, &config) == NULL);
+  REQUIRE(strcmp(mito_engine_get_last_error_code(), "MITO-E1601") == 0);
   mito_engine_analyze_options_v1_init(&config);
   config.max_input_records = 1;
   REQUIRE(mito_engine_analyze_with_options_v1(engine, argv[1], NULL, &config) == NULL);

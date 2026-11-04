@@ -17,12 +17,16 @@ fetch_model() {
   mv "$temporary" "$destination"
 }
 
+# One human structure per OXPHOS complex; together they hold all 13 mtDNA-encoded
+# proteins. scripts/build_structure_catalog.py verifies chains and numbering.
 fetch_model 8H9S
 fetch_model 9I4I
+fetch_model 9HZL
+fetch_model 9I7U
 
 (
   cd "$OUTPUT_DIR"
-  sha256sum 8h9s.bcif 9i4i.bcif > manifest.sha256
+  sha256sum 8h9s.bcif 9hzl.bcif 9i4i.bcif 9i7u.bcif > manifest.sha256
   sha256sum --check manifest.sha256
 )
 

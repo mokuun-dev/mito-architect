@@ -34,6 +34,8 @@ pub(super) fn validate_fixture(args: ValidateFixtureArgs) -> Result<()> {
             &args.input,
             None,
             AnalyzeOptions {
+                // This fixture marks its NUMT read by name, a development control.
+                allow_development_tags: true,
                 filter_numt: true,
                 threads: 1,
                 ..AnalyzeOptions::default()

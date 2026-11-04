@@ -157,7 +157,17 @@ function VariantDetails({ data, row, onShowInGenome }: { data: MitoAnalysisData;
               {row.qcFlags.map((flag) => <span key={flag} className="badge-warning font-mono">{flag}</span>)}
             </div>
           )}
-          <p className="mt-3 text-xs leading-5 text-muted">QC facts are observational; calibrated hard filters have not been applied.</p>
+          {variant.precision ? (
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-line pt-3 text-[13px]">
+              <Fact label="Adjusted q-value" value={formatProbability(variant.precision.q_value)} />
+              <Fact label="Error background" value={formatFraction(variant.precision.background_rate)} />
+              {'lod' in variant.precision && <Fact label="LOD" value={variant.precision.lod.toFixed(1)} />}
+              {'raw_alt_depth' in variant.precision && <Fact label="Molecules with gap in alignment" value={formatCount(variant.precision.raw_alt_depth)} />}
+              {'vcf_position' in variant.precision && <Fact label="VCF" value={`${variant.precision.vcf_position} ${variant.precision.vcf_ref}>${variant.precision.vcf_alt}`} />}
+            </dl>
+          ) : (
+            <p className="mt-3 text-xs leading-5 text-muted">QC facts are observational; calibrated hard filters have not been applied.</p>
+          )}
         </Section>
       )}
 
@@ -212,17 +222,20 @@ function StructuralDetails({ row, onShowInGenome }: { row: EventRow; onShowInGen
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-[13px]">
           <Fact label="Span" value={row.change} />
           <Fact label="Length" value={sv.length ? `${sv.length.toLocaleString('en-US')} bp` : '—'} />
-          <Fact label="Supporting molecules" value={formatCount(sv.supporting_reads.length)} />
+          <Fact label="Supporting molecules" value={formatCount(sv.precision?.junction_molecules ?? sv.supporting_reads.length)} />
           <Fact label="Known event" value={sv.known_event ? 'Yes' : 'No'} />
           <Fact label="Evidence" value={(sv.evidence_sources ?? (sv.evidence_source ? [sv.evidence_source] : [])).join(', ') || '—'} />
           <Fact label="Orientation" value={(sv.orientations ?? (sv.orientation ? [sv.orientation] : [])).join(', ') || '—'} />
           {sv.segment_count !== undefined && <Fact label="Segments" value={String(sv.segment_count)} />}
         </dl>
-        <p className="mt-3 text-xs leading-5 text-muted">
-          Structural support is not converted into a frequency without a matching denominator of negative observations.
-        </p>
+        {!sv.precision && (
+          <p className="mt-3 text-xs leading-5 text-muted">
+            Structural support is not converted into a frequency without a matching denominator of negative observations.
+          </p>
+        )}
       </Section>
-      {row.genes.length > 0 && (
+      {sv.precision && <DeletionDetails deletion={sv.precision} />}
+      {!sv.precision && row.genes.length > 0 && (
         <Section title={`Affected genes (${row.genes.length})`}>
           <p className="text-[13px] leading-6">{row.genes.join(', ')}</p>
         </Section>
@@ -238,6 +251,56 @@ function StructuralDetails({ row, onShowInGenome }: { row: EventRow; onShowInGen
       </Actions>
     </>
   );
+}
+
+function DeletionDetails({ deletion }: { deletion: NonNullable<NonNullable<EventRow['sv']>['precision']> }) {
+  const impact = deletion.impact;
+  return (
+    <>
+      <Section title="Level and breakpoints">
+        {deletion.fraction !== null ? (
+          <div className="mb-3 flex items-baseline gap-3">
+            <span className="text-3xl font-semibold tracking-tight">{formatFraction(deletion.fraction)}</span>
+            <span className="text-[13px] text-muted">95% CI {formatFraction(deletion.ci95_low)}–{formatFraction(deletion.ci95_high)}</span>
+          </div>
+        ) : (
+          <p className="notice-warning mb-3">No molecule spans these breakpoints without the deletion, so no level can be estimated.</p>
+        )}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-[13px]">
+          <Fact label="Junction molecules F / R" value={`${deletion.junction_forward} / ${deletion.junction_reverse}`} />
+          <Fact label="Wild-type at breakpoints" value={`${deletion.wild_type_left} / ${deletion.wild_type_right}`} />
+          <Fact label="Depth inside / outside" value={deletion.depth_ratio === null ? '—' : deletion.depth_ratio.toFixed(2)} />
+          <Fact label="Adjusted q-value" value={formatProbability(deletion.q_value)} />
+          <Fact label="3' placement" value={`${deletion.start.toLocaleString('en-US')}–${deletion.end.toLocaleString('en-US')}`} />
+          <Fact label="Leftmost placement" value={`${deletion.left_aligned_start.toLocaleString('en-US')}–${deletion.left_aligned_end.toLocaleString('en-US')}`} />
+        </dl>
+        {deletion.microhomology && (
+          <p className="mt-3 break-all text-[13px]">
+            <span className="text-muted">Direct repeat at the breakpoints ({deletion.microhomology.length} bp) </span>
+            <span className="font-mono">{deletion.microhomology}</span>
+          </p>
+        )}
+        {deletion.known_common_deletion && <p className="mt-2 text-[13px] font-medium">This is the 4,977-bp common deletion.</p>}
+        <p className="mt-3 text-xs leading-5 text-muted">
+          The level counts junction molecules against wild-type molecules spanning the breakpoints. Long-range PCR favours shorter molecules, so an amplified sample can read high.
+        </p>
+      </Section>
+      <Section title="Predicted impact">
+        <dl className="grid gap-2.5 text-[13px]">
+          <Fact label="Genes lost" value={impact.genes_lost.join(', ') || 'None'} />
+          <Fact label="Genes truncated" value={impact.genes_partial.join(', ') || 'None'} />
+          {impact.fusion && <Fact label="Junction" value={impact.fusion} />}
+          <Fact label="Replication origins" value={[impact.heavy_strand_origin_lost && 'heavy-strand origin lost', impact.light_strand_origin_lost && 'light-strand origin lost'].filter(Boolean).join(', ') || 'Both retained'} />
+          <Fact label="Location" value={[impact.major_arc ? 'major arc' : 'includes minor arc', impact.contact_zone && '6–9 / 13–16 kb contact zone'].filter(Boolean).join(', ')} />
+        </dl>
+      </Section>
+    </>
+  );
+}
+
+function formatProbability(value: number): string {
+  if (value >= 0.001) return value.toFixed(3);
+  return value <= 1e-99 ? '<1e-99' : value.toExponential(1);
 }
 
 function GeneDetails({ gene, rows, onSelectRow, onSelectGene, onShowInGenome }: {

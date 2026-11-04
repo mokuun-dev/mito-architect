@@ -1,6 +1,11 @@
 #include "detail/pipeline.hpp"
+
+#include <algorithm>
+#include <cstring>
 #ifdef MITO_HAS_HTSLIB
 #include <htslib/cram.h>
+#include <htslib/hfile.h>
+#include <htslib/hts_endian.h>
 #include <htslib/kstring.h>
 #include <htslib/sam.h>
 
@@ -37,6 +42,27 @@ private:
   std::size_t records_ = 0U;
   std::uint64_t bases_ = 0U;
 };
+
+// Reference bases consumed by a SAM CIGAR string, saturating; zero for "*" or
+// text that is not a CIGAR (the record parser rejects those later).
+[[nodiscard]] std::uint64_t cigar_reference_span(std::string_view cigar) {
+  std::uint64_t span = 0U;
+  std::uint64_t length = 0U;
+  for (const char character : cigar) {
+    if (character >= '0' && character <= '9') {
+      length = std::min<std::uint64_t>(length * 10U + static_cast<std::uint64_t>(character - '0'),
+                                       std::numeric_limits<std::uint32_t>::max());
+      continue;
+    }
+    if (character == 'M' || character == 'D' || character == 'N' ||
+        character == '=' || character == 'X') {
+      span = std::min<std::uint64_t>(span + length,
+                                     std::numeric_limits<std::uint64_t>::max() / 2U);
+    }
+    length = 0U;
+  }
+  return span;
+}
 
 } // namespace
 
@@ -248,7 +274,12 @@ parse_sam_aux_tags(const std::vector<std::string> &fields,
                           "SAM record has fewer than 11 fields at line " +
                               std::to_string(line_number));
     }
-    budget.add_record(fields[9] == "*" ? 0U : fields[9].size());
+    // Same units as the BAM reader: query length, a quarter of the record
+    // text, or the reference span, whichever is largest.
+    budget.add_record(std::max<std::uint64_t>(
+        {fields[9] == "*" ? 0U : static_cast<std::uint64_t>(fields[9].size()),
+         (static_cast<std::uint64_t>(line.size()) + 3U) / 4U,
+         cigar_reference_span(fields[5])}));
 
     const auto flags = parse_size(fields[1]);
     const auto reference_start = parse_size(fields[3]);
@@ -377,6 +408,123 @@ private:
                        end == std::string::npos ? std::string::npos : end - 1U);
 }
 
+// Opens a local SAM, BAM or CRAM file. htslib detects the format from content,
+// and the htsget and crypt4gh formats make it open further files or URLs named
+// inside the input. The format is therefore checked before htslib acts on it,
+// so an uploaded file can never redirect the reader.
+[[nodiscard]] htsFile *open_alignment_container(const std::string &path) {
+  hFILE *stream = hopen(path.c_str(), "r");
+  if (stream == nullptr) {
+    throw AnalysisError(AnalysisErrorCode::input_open_failed,
+                        "htslib could not open alignment file: " + path);
+  }
+  htsFormat format{};
+  if (hts_detect_format2(stream, path.c_str(), &format) < 0) {
+    hclose_abruptly(stream);
+    throw AnalysisError(AnalysisErrorCode::input_parse_failed,
+                        "htslib could not read alignment file: " + path);
+  }
+  if (format.format != sam && format.format != bam && format.format != cram) {
+    hclose_abruptly(stream);
+    throw AnalysisError(AnalysisErrorCode::input_parse_failed,
+                        "input content is not SAM, BAM or CRAM: " + path);
+  }
+  htsFile *file = hts_hopen(stream, path.c_str(), "r");
+  if (file == nullptr) {
+    // hts_hopen leaves the stream to the caller when it fails.
+    hclose_abruptly(stream);
+    throw AnalysisError(AnalysisErrorCode::input_open_failed,
+                        "htslib could not open alignment file: " + path);
+  }
+  return file;
+}
+
+// Budget units for one BAM record. A record costs at least its query length,
+// a quarter of its decoded size, and its reference span. The last two keep
+// tags, long CIGARs and deletion-only alignments, which carry few query bases,
+// from expanding into unbounded memory and work. Real reads stay at their
+// query length: their decoded size is under four bytes per base and their
+// span is close to the read length.
+[[nodiscard]] std::uint64_t record_budget_units(const bam1_t &record) {
+  const auto query = static_cast<std::uint64_t>(std::max(0, record.core.l_qseq));
+  const auto decoded =
+      (static_cast<std::uint64_t>(std::max(0, record.l_data)) + 3U) / 4U;
+  const auto span = static_cast<std::uint64_t>(
+      std::max<hts_pos_t>(0, bam_cigar2rlen(static_cast<int>(record.core.n_cigar),
+                                            bam_get_cigar(&record))));
+  return std::max({query, decoded, span});
+}
+
+// htslib's bam_aux_first and bam_aux_next do not bound-check the field they
+// return; only bam_aux_get does. Every field is therefore checked against the
+// end of the record, in 64-bit arithmetic, before any accessor reads it: a
+// string must end in NUL inside the record and an array must fit.
+[[nodiscard]] bool aux_layout_is_valid(const bam1_t &record) {
+  const std::uint8_t *cursor = bam_get_aux(&record);
+  const std::uint8_t *const end = record.data + record.l_data;
+  if (cursor > end) {
+    return false;
+  }
+  const auto fixed_size = [](const char type) -> std::uint64_t {
+    switch (type) {
+    case 'A':
+    case 'c':
+    case 'C':
+      return 1U;
+    case 's':
+    case 'S':
+      return 2U;
+    case 'i':
+    case 'I':
+    case 'f':
+      return 4U;
+    case 'd':
+      return 8U;
+    default:
+      return 0U;
+    }
+  };
+  while (cursor < end) {
+    auto remaining = static_cast<std::uint64_t>(end - cursor);
+    if (remaining < 3U) {
+      return false;
+    }
+    const char type = static_cast<char>(cursor[2]);
+    cursor += 3;
+    remaining -= 3U;
+    std::uint64_t size = 0U;
+    if (type == 'Z' || type == 'H') {
+      const void *terminator = std::memchr(cursor, '\0', remaining);
+      if (terminator == nullptr) {
+        return false;
+      }
+      size = static_cast<std::uint64_t>(
+                 static_cast<const std::uint8_t *>(terminator) - cursor) +
+             1U;
+    } else if (type == 'B') {
+      if (remaining < 5U) {
+        return false;
+      }
+      const char element = static_cast<char>(cursor[0]);
+      const auto element_size = fixed_size(element);
+      if (element_size == 0U || element == 'A' || element == 'd') {
+        return false;
+      }
+      size = 5U + element_size * static_cast<std::uint64_t>(le_to_u32(cursor + 1));
+    } else {
+      size = fixed_size(type);
+      if (size == 0U) {
+        return false;
+      }
+    }
+    if (size > remaining) {
+      return false;
+    }
+    cursor += size;
+  }
+  return true;
+}
+
 } // namespace
 
 class MitoFileReader {
@@ -387,11 +535,7 @@ public:
         reference_path_(reference_path) {}
 
   [[nodiscard]] InputRecords read_all(const AnalysisConfig &config) const {
-    htsFile *raw_file = sam_open(path_.c_str(), "r");
-    if (raw_file == nullptr) {
-      throw AnalysisError(AnalysisErrorCode::input_open_failed,
-                          "htslib could not open alignment file: " + path_);
-    }
+    htsFile *raw_file = open_alignment_container(path_);
     HtsFileHandle file(raw_file);
     // Format comes from content, not the extension: a CRAM named .bam gets
     // the same reference policy.
@@ -428,8 +572,7 @@ public:
     while ((read_status = sam_read1(file.get(), header.get(), record.get())) >=
            0) {
       throw_if_cancelled(config);
-      budget.add_record(
-          static_cast<std::uint64_t>(std::max(0, record.get()->core.l_qseq)));
+      budget.add_record(record_budget_units(*record.get()));
       records.reads.push_back(convert_record(*header.get(), *record.get()));
     }
     if (read_status < -1) {
@@ -606,6 +749,11 @@ private:
   [[nodiscard]] static std::map<std::string, std::string>
   aux_tags(const bam1_t &record) {
     std::map<std::string, std::string> tags;
+    if (!aux_layout_is_valid(record)) {
+      throw AnalysisError(AnalysisErrorCode::input_parse_failed,
+                          "invalid auxiliary fields for read '" +
+                              std::string(bam_get_qname(&record)) + "'");
+    }
     errno = 0;
     const std::uint8_t *value = bam_aux_first(&record);
     if (value == nullptr) {

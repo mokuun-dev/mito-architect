@@ -2,6 +2,48 @@ import type { MitoAnalysisData } from '@mito-architect/visualization-lib';
 import { EmptyRow } from './shared';
 
 export function HaplogroupPanel({ data }: { data: MitoAnalysisData }) {
+  const calls = data.precision_calls;
+  const lineages = calls?.haplotypes ?? [];
+  return (
+    <div className="grid gap-5">
+      {lineages.length > 0 && (
+        <section aria-labelledby="phased-lineages">
+          <h3 id="phased-lineages" className="text-sm font-semibold">Phased lineages</h3>
+          <p className="mt-1 max-w-[80ch] text-[13px] leading-5 text-muted">
+            Reads are grouped by the alleles they carry at heteroplasmic sites, treating uncovered sites as unknown.
+            {lineages.length > 1
+              ? ' A second lineage can reflect heteroplasmy, a mixed sample, or contamination; the reads do not say which.'
+              : ' Molecules here form a single lineage.'}
+          </p>
+          <ul className="mt-3 grid gap-2">
+            {lineages.map((lineage) => (
+              <li key={lineage.id} className="rounded-lg border border-line px-4 py-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="text-[15px] font-semibold text-accent">{lineage.haplogroup ?? 'unassigned'}</span>
+                  <span className="text-[13px] tabular-nums text-muted">
+                    {(lineage.fraction * 100).toFixed(1)}% of informative molecules · {lineage.molecules.toLocaleString('en-US')} placed
+                    {lineage.haplogroup_quality !== undefined && ` · score ${lineage.haplogroup_quality.toFixed(1)}`}
+                  </span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-panel2" aria-hidden>
+                  <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(1, lineage.fraction * 100)}%` }} />
+                </div>
+                {lineage.defining_variants.length > 0 && (
+                  <p className="mt-2 text-xs text-muted">
+                    {lineage.defining_variants.length} variants distinguish it from the largest lineage
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <HaplogroupClusters data={data} />
+    </div>
+  );
+}
+
+function HaplogroupClusters({ data }: { data: MitoAnalysisData }) {
   return (
     <div className="data-scroll rounded-lg border border-line">
       <div className="grid min-w-[760px] grid-cols-[0.7fr_0.8fr_0.55fr_0.8fr_1.4fr] gap-2 border-b border-line bg-panel2 px-3 py-2 text-xs font-semibold uppercase tracking-normal text-muted">

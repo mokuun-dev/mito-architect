@@ -5,6 +5,10 @@
 #include "resources.hpp"
 #include "variants.hpp"
 
+#include <atomic>
+#include <cstdint>
+#include <string>
+
 namespace mito::detail {
 
 // Per-base helpers used in every aligned-base loop; defined inline so the
@@ -113,9 +117,27 @@ void strip_trailing_carriage_return(std::string &value);
 [[nodiscard]] std::string phylotree_weights_path();
 [[nodiscard]] std::string phylotree_alignment_rules_path();
 [[nodiscard]] std::string resource_manifest_path();
+[[nodiscard]] std::string structure_catalog_path();
 [[nodiscard]] std::vector<ResourceRecord> load_resource_manifest();
 void apply_runtime_resource_overrides(std::vector<ResourceRecord> &records);
 void throw_if_cancelled(const AnalysisConfig &config);
+
+// Counts work units of one analysis stage against a fixed budget. Once the
+// budget is spent the stage fails closed with resource_exhausted (MITO-E1601),
+// so a small crafted input cannot buy unbounded CPU time. Each charge also
+// checks cancellation. Safe to charge from parallel workers.
+class WorkBudget {
+public:
+  WorkBudget(const AnalysisConfig &config, std::uint64_t limit, std::string stage);
+  void charge(std::uint64_t units);
+  [[nodiscard]] std::uint64_t used() const;
+
+private:
+  const AnalysisConfig &config_;
+  std::uint64_t limit_;
+  std::string stage_;
+  std::atomic<std::uint64_t> used_{0U};
+};
 [[nodiscard]] std::string load_reference(const std::string &reference_path);
 [[nodiscard]] std::vector<GeneAnnotation> default_genes();
 
@@ -204,7 +226,8 @@ assemble_molecules(InputRecords &input, const AnalysisConfig &config,
 [[nodiscard]] bool looks_like_nuclear_contig(std::string_view reference_name);
 [[nodiscard]] bool has_nuclear_supplementary_alignment(const ReadRecord &read);
 [[nodiscard]] std::vector<std::string>
-numt_evidence(const ReadRecord &read, std::size_t reference_length);
+numt_evidence(const ReadRecord &read, std::size_t reference_length,
+              bool allow_read_name_control);
 [[nodiscard]] double numt_score(const std::vector<std::string> &evidence);
 [[nodiscard]] bool passes_snp_alignment_filters(const ReadRecord &read,
                                                 const AnalysisConfig &config);

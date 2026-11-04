@@ -188,6 +188,16 @@ namespace {
 #endif
 }
 
+[[nodiscard]] std::string structure_catalog_path() {
+#ifdef MITO_STRUCTURE_CATALOG_PATH
+  return bundled_resource_path("mt_structure_catalog.tsv",
+                               MITO_STRUCTURE_CATALOG_PATH);
+#else
+  return bundled_resource_path("mt_structure_catalog.tsv",
+                               "core/data/mt_structure_catalog.tsv");
+#endif
+}
+
 [[nodiscard]] std::string resource_manifest_path() {
 #ifdef MITO_RESOURCE_MANIFEST_PATH
   return bundled_resource_path("resource_manifest.tsv",
@@ -255,6 +265,24 @@ void throw_if_cancelled(const AnalysisConfig &config) {
     throw AnalysisError(AnalysisErrorCode::analysis_cancelled,
                         "analysis cancelled");
   }
+}
+
+WorkBudget::WorkBudget(const AnalysisConfig &config, const std::uint64_t limit,
+                       std::string stage)
+    : config_(config), limit_(limit), stage_(std::move(stage)) {}
+
+void WorkBudget::charge(const std::uint64_t units) {
+  const auto total = used_.fetch_add(units, std::memory_order_relaxed) + units;
+  if (total > limit_) {
+    throw AnalysisError(AnalysisErrorCode::resource_exhausted,
+                        stage_ + " exceeds its work budget of " +
+                            std::to_string(limit_) + " units");
+  }
+  throw_if_cancelled(config_);
+}
+
+std::uint64_t WorkBudget::used() const {
+  return used_.load(std::memory_order_relaxed);
 }
 
 [[nodiscard]] std::string load_reference(const std::string &reference_path) {

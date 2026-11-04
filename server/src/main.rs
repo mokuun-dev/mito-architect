@@ -57,6 +57,12 @@ async fn main() -> anyhow::Result<()> {
     if max_input_bases == 0 {
         anyhow::bail!("MITO_MAX_INPUT_BASES must be a positive integer");
     }
+    let compact_result_min_molecules = match std::env::var("MITO_COMPACT_MIN_MOLECULES") {
+        Ok(value) => value
+            .parse::<usize>()
+            .map_err(|_| anyhow::anyhow!("MITO_COMPACT_MIN_MOLECULES must be an integer"))?,
+        Err(_) => 200,
+    };
     let max_stored_jobs = positive_env_usize("MITO_MAX_STORED_JOBS")?.unwrap_or(64);
     if max_stored_jobs < max_active_jobs {
         anyhow::bail!("MITO_MAX_STORED_JOBS must be at least MITO_MAX_ACTIVE_JOBS");
@@ -169,6 +175,7 @@ async fn main() -> anyhow::Result<()> {
         max_upload_bytes,
         max_input_records,
         max_input_bases,
+        compact_result_min_molecules,
         max_stored_jobs,
         max_stored_bytes,
         tmp_dir,

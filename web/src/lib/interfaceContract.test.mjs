@@ -37,6 +37,10 @@ test('scientific visualizations retain accessible evidence fallbacks', async () 
   assert.match(genome, /hollow markers have\s+no callable denominator/);
   assert.match(viewer, /role="img"/);
   assert.match(viewer, /not a pathogenicity verdict/);
+  // A residue is only highlighted once coordinates confirm it, and is never guessed.
+  assert.match(viewer, /checkResidue/);
+  assert.match(viewer, /nothing is highlighted/);
+  assert.doesNotMatch(viewer, /sanitizeChain/);
   assert.match(modules, /EvidencePanel/);
   assert.match(upload, /role="alert"/);
   assert.match(upload, /aria-describedby=/);

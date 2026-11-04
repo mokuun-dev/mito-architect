@@ -25,7 +25,8 @@ namespace mito::detail {
   feature.id = read.id;
   feature.length = read.sequence.size();
   feature.mean_quality = mean_quality(read.qualities);
-  feature.numt_evidence = numt_evidence(read, reference.size());
+  feature.numt_evidence =
+      numt_evidence(read, reference.size(), config.allow_development_tags);
   feature.numt_score = numt_score(feature.numt_evidence);
   feature.filtered_numt =
       config.filter_numt && feature.numt_score > config.numt_threshold;

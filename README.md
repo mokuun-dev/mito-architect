@@ -32,16 +32,58 @@ cargo run --release -p mito-server
 npm --workspace web run dev
 ```
 
-Open <http://127.0.0.1:5173> and upload an aligned SAM/BAM/CRAM file. The
-default analysis uses result schema 0.5. The extended schema 0.6 evidence
-graph is optional and may reach its resource limit on noisy long reads.
-The local API listens on <http://127.0.0.1:8080>.
+Open <http://127.0.0.1:5173> and upload an aligned SAM/BAM/CRAM file, or open
+one of the example samples on the start page. The default analysis uses result
+schema 0.5. The extended schema 0.6 evidence graph is optional and may reach its
+resource limit on noisy long reads. The local API listens on
+<http://127.0.0.1:8080>.
 
 Raw FASTQ reads have no reference coordinates. Align them before upload if
 you need variant, coverage, or structural-change results. For NUMT
 specificity assessment, align against a reference that contains both nuclear
 and mitochondrial sequences. Alignment only to the bundled mtDNA reference
 leaves that assessment unavailable.
+
+## Variant calling
+
+Long reads carry far more errors than variants, so every mismatch and gap is
+first a hypothesis. The `precision_calls` section of a result holds the calls that
+stand out from an error background measured in the same sample, at a 1% false
+discovery rate:
+
+- SNVs, tested per strand against a model of each sequence context.
+- Small indels, normalized on the circular genome and re-scored read by read.
+- Large deletions, with breakpoints, direct repeats, level, genes lost and the
+  reading frame at the junction.
+- Phased lineages, which separate a mixed sample read by read.
+- The effect of each variant on its protein, and where that residue sits in an
+  experimental structure of its respiratory complex.
+
+Noisier data supports fewer low-level calls. Positions without enough depth are
+reported as not callable, never as reference. See
+[docs/variant-calling.md](docs/variant-calling.md) for the methods and sources.
+
+A real long-read sample has tens of thousands of raw per-read events. To keep only
+supported events in a result, use `--compact-min-molecules N` with `mito-cli
+analyze`. The server does this from 200 molecules; set
+`MITO_COMPACT_MIN_MOLECULES` to change that, or to 0 to keep every raw event.
+
+## Example samples
+
+The start page lists samples built from public mitochondrial genomes of different
+people (GenBank, Ingman et al. 2000) on simulated reads, plus one real nanopore
+run. They are actual engine output. Clinical variants and large deletions in them
+are added in silico and are not findings about those people.
+
+To regenerate them after changing the engine:
+
+```bash
+cargo build --release -p mito-cli
+python3 scripts/mtsim/build_demo_panel.py --work .data/demo-work \
+  --engine "target/release/mito-cli analyze --json --compact-min-molecules 50 --input {bam}"
+```
+
+The real sample needs its reads first: run `bash scripts/mtsim/fetch_real_sample.sh`.
 
 ## Try public data
 
@@ -76,6 +118,24 @@ suggests, so the engine caps decoded input and fails closed with
 | --- | --- | --- | --- |
 | Decoded records | `--max-input-records` | `MITO_MAX_INPUT_RECORDS` | 50,000,000 / 2,000,000 |
 | Decoded bases | `--max-input-bases` | `MITO_MAX_INPUT_BASES` | 10 Gbp / 1 Gbp |
+
+Each SAM, BAM or CRAM record counts the largest of its query length, a quarter
+of its decoded size, and its reference span. Tags, long CIGARs and
+deletion-only alignments therefore count against the base cap. Real reads
+count only their query length.
+
+Stages whose work can grow faster than the input also have fixed work budgets
+that fail with `MITO-E1601`: indel realignment, the deletion breakpoint search
+and read clustering. Each budget sits 40 times or more above the peak measured
+on real and simulated runs, and stops a crafted input after about a minute of
+CPU time.
+
+The engine reads only SAM, BAM and CRAM content, whatever the file is called.
+htslib can also follow htsget tickets and crypt4gh wrappers, which name further
+files or URLs to open. An uploaded file could use that to make the server read
+local files or contact other hosts, so the engine refuses those formats before
+htslib opens anything. Auxiliary fields of each BAM record are bounds-checked
+before they are read, because htslib's iterators do not check them.
 
 CRAM is decoded only against the analysis reference (the bundled rCRS
 unless `--reference` is given). A contig matches it by MD5, so `chrM`, `MT`
@@ -131,6 +191,8 @@ bash scripts/verify.sh
 ```
 
 The verification script runs the native, Rust, web, and fixture checks.
+`scripts/mtsim/benchmark.py` scores the caller on simulated reads with a known
+truth; results are in [docs/benchmarks.md](docs/benchmarks.md).
 For source navigation: `core/` contains the C++ analysis engine, `ffi/`
 connects it to Rust, `cli/` and `server/` expose it, and `web/` with
 `visualization-lib/` renders the results.

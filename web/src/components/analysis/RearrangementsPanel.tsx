@@ -5,6 +5,39 @@ import { useMitoStore } from '../../lib/store';
 import { Metric } from './shared';
 import { EmptyRow } from './shared';
 
+function CalledDeletions({ data }: { data: MitoAnalysisData }) {
+  const deletions = (data.precision_calls?.deletions ?? []).filter((deletion) => deletion.status === 'PASS');
+  if (!data.precision_calls?.assessed) return null;
+  return (
+    <section className="data-scroll rounded-lg border border-line" aria-labelledby="called-deletions-title">
+      <div className="border-b border-line bg-panel2 px-3 py-2">
+        <h3 id="called-deletions-title" className="text-sm font-semibold">Called large deletions</h3>
+        <p className="mt-0.5 text-xs text-muted">
+          Junctions merged across placements, with the level measured against wild-type molecules at the breakpoints.
+        </p>
+      </div>
+      <div className="grid min-w-[820px] grid-cols-[1.1fr_0.55fr_0.9fr_0.7fr_0.8fr_1.6fr] gap-2 border-b border-line px-3 py-2 text-xs font-semibold uppercase tracking-normal text-muted">
+        <div>Deleted span</div><div>Length</div><div>Level (95% CI)</div><div>Junctions</div><div>Repeat</div><div>Impact</div>
+      </div>
+      {deletions.length === 0 ? <EmptyRow text="No large deletion passed the statistical filters" /> : deletions.map((deletion) => (
+        <div key={deletion.id} className="grid min-w-[820px] grid-cols-[1.1fr_0.55fr_0.9fr_0.7fr_0.8fr_1.6fr] gap-2 border-b border-line px-3 py-2 text-[13px] last:border-0">
+          <div className="font-mono">{deletion.start.toLocaleString('en-US')}–{deletion.end.toLocaleString('en-US')}</div>
+          <div className="tabular-nums">{deletion.length.toLocaleString('en-US')} bp</div>
+          <div className="tabular-nums">
+            {deletion.fraction === null ? 'not estimable' : `${(deletion.fraction * 100).toFixed(1)}% (${(deletion.ci95_low * 100).toFixed(1)}–${(deletion.ci95_high * 100).toFixed(1)})`}
+          </div>
+          <div className="tabular-nums">{deletion.junction_molecules.toLocaleString('en-US')}</div>
+          <div className="truncate font-mono" title={deletion.microhomology || 'none'}>{deletion.microhomology.length > 0 ? `${deletion.microhomology.length} bp` : 'none'}</div>
+          <div className="text-muted">
+            {deletion.known_common_deletion && <span className="font-medium text-text">Common deletion. </span>}
+            {deletion.impact.fusion ?? `${deletion.impact.genes_lost.length} genes lost`}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export function RearrangementsPanel({ data }: { data: MitoAnalysisData }) {
   const paths = data.complex_events ?? [];
   const eventsById = new Map((data.events ?? []).map((event) => [event.id, event]));
@@ -45,6 +78,8 @@ export function RearrangementsPanel({ data }: { data: MitoAnalysisData }) {
           value={new Set(paths.flatMap((path) => eventsById.get(path.event_id ?? path.id)?.supporting_molecule_ids ?? path.supporting_reads)).size.toString()}
         />
       </div>
+
+      <CalledDeletions data={data} />
 
       <section className="data-scroll rounded-lg border border-line" aria-labelledby="complex-paths-title">
         <div className="border-b border-line bg-panel2 px-3 py-2">

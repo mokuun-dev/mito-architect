@@ -1,4 +1,5 @@
 #include "detail/pipeline.hpp"
+#include "detail/precision.hpp"
 
 namespace mito::detail {
 
@@ -94,31 +95,62 @@ elapsed_microseconds(const AnalysisClock::time_point start) {
     timings->event_merge_us = elapsed_microseconds(event_merge_start);
   }
 
+  const auto precision_start = AnalysisClock::now();
+  PrecisionCallResult precision;
+  if (input.alignment_input) {
+    precision = call_precision_variants(assembly, features, reference, config);
+  }
+  // Noisy long reads carry thousands of per-read errors. Above the configured
+  // size the read, cluster and event projections keep only supported events.
+  const bool compact_result = precision.assessed &&
+                              config.compact_result_min_molecules != 0U &&
+                              assembly.molecules.size() >= config.compact_result_min_molecules;
+  if (compact_result) {
+    apply_compact_projection(precision, reference, features, svs, complex_events);
+  }
+  if (timings != nullptr) {
+    timings->precision_calling_us = elapsed_microseconds(precision_start);
+  }
+  throw_if_cancelled(config);
+
   std::string_view clustering_backend =
       "Read clusters use DBSCAN over SNP/SV feature tokens";
   const auto clustering_start = AnalysisClock::now();
-#ifdef MITO_HAS_HDBSCAN_CPP
-  if (assign_hdbscan_clusters(features, config.min_cluster_size, config)) {
+  if (compact_result) {
+    // Token clustering needs each read to span most of its lineage's markers. The
+    // mixture model treats an uncovered site as missing, so partial reads phase.
+    assign_haplotype_clusters(precision, features);
     clustering_backend =
-        "Read clusters use HDBSCAN-C++ over dense SNP/SV feature vectors";
+        "Read clusters are haplotypes from a Bernoulli mixture over supported "
+        "heteroplasmic SNVs";
   } else {
+#ifdef MITO_HAS_HDBSCAN_CPP
+    if (assign_hdbscan_clusters(features, config.min_cluster_size, config)) {
+      clustering_backend =
+          "Read clusters use HDBSCAN-C++ over dense SNP/SV feature vectors";
+    } else {
+      assign_dbscan_clusters(features, config.cluster_epsilon,
+                             config.min_cluster_size, config);
+      clustering_backend =
+          "Read clusters use DBSCAN fallback after HDBSCAN-C++ adapter failure";
+    }
+#else
     assign_dbscan_clusters(features, config.cluster_epsilon,
                            config.min_cluster_size, config);
-    clustering_backend =
-        "Read clusters use DBSCAN fallback after HDBSCAN-C++ adapter failure";
-  }
-#else
-  assign_dbscan_clusters(features, config.cluster_epsilon,
-                         config.min_cluster_size, config);
 #endif
+  }
   if (timings != nullptr) {
     timings->clustering_us = elapsed_microseconds(clustering_start);
   }
 
   throw_if_cancelled(config);
   const auto aggregation_start = AnalysisClock::now();
-  const auto coverage =
-      compute_coverage(reads, features, config, reference.size());
+  auto coverage = compute_coverage(reads, features, config, reference.size());
+  if (compact_result) {
+    coverage = coverage_from_molecule_depth(
+        precision.depth_by_position,
+        coverage.bins.empty() ? std::size_t{180} : coverage.bins.size());
+  }
   auto evidence = aggregate_snps(assembly, features, config, reference.size(),
                                  reference, clinical_annotations);
   CallabilityResult callability;
@@ -168,6 +200,32 @@ elapsed_microseconds(const AnalysisClock::time_point start) {
     timings->haplogroup_assignment_us = elapsed_microseconds(haplogroup_start);
   }
 
+  if (precision.assessed) {
+    const auto consensus_feature =
+        consensus_haplogroup_feature(precision, reference, assembly);
+    const auto consensus_assignment = assign_haplogroups(
+        {consensus_feature}, haplogroup_definitions, haplogroup_weights,
+        haplogroup_alignment_rules, config);
+    if (const auto found = consensus_assignment.find(0);
+        found != consensus_assignment.end()) {
+      precision.consensus_haplogroup = found->second;
+    }
+    std::vector<ReadFeature> haplotype_features;
+    haplotype_features.reserve(precision.haplotypes.size());
+    for (const auto &haplotype : precision.haplotypes) {
+      haplotype_features.push_back(haplotype.feature);
+    }
+    const auto haplotype_assignments = assign_haplogroups(
+        haplotype_features, haplogroup_definitions, haplogroup_weights,
+        haplogroup_alignment_rules, config);
+    for (auto &haplotype : precision.haplotypes) {
+      if (const auto found = haplotype_assignments.find(haplotype.id);
+          found != haplotype_assignments.end()) {
+        haplotype.haplogroup = found->second;
+      }
+    }
+  }
+
   const auto serialization_start = AnalysisClock::now();
   auto json =
       render_json(input_path, reference_path, config, clustering_backend,
@@ -176,6 +234,14 @@ elapsed_microseconds(const AnalysisClock::time_point start) {
                   coverage, evidence.variants, evidence.store, callability,
                   phase_links, architecture_inference, haplogroups,
                   architecture_haplogroups, resources);
+  // The precision section is additive, so it is spliced before the final brace
+  // and neither schema's existing fields change.
+  if (!json.empty() && json.back() == '}') {
+    json.pop_back();
+    json += ",\"precision_calls\":";
+    json += render_precision_calls_json(precision, config);
+    json.push_back('}');
+  }
   if (json.size() > config.max_result_bytes) {
     throw AnalysisError(
         AnalysisErrorCode::resource_exhausted,

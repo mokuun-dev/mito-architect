@@ -4,4 +4,5 @@ export type * from './types/variants';
 export type * from './types/reads';
 export type * from './types/evidence';
 export type * from './types/architectures';
+export type * from './types/precision';
 export type * from './types/result';

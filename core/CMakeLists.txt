@@ -10,6 +10,10 @@ add_library(mito_core STATIC
   src/molecules.cpp
   src/snps.cpp
   src/indels.cpp
+  src/mt_annotation.cpp
+  src/precision_stats.cpp
+  src/precision_caller.cpp
+  src/precision_json.cpp
   src/callability.cpp
   src/structural.cpp
   src/features.cpp
@@ -52,6 +56,7 @@ target_compile_definitions(mito_core
     MITO_PHYLOTREE_WEIGHTS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/phylotree-rcrs-17.3-weights.txt"
     MITO_PHYLOTREE_ALIGNMENT_RULES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/phylotree-rcrs-17.3-rules.csv"
     MITO_RESOURCE_MANIFEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/resource_manifest.tsv"
+    MITO_STRUCTURE_CATALOG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/mt_structure_catalog.tsv"
 )
 target_link_libraries(mito_core PUBLIC Threads::Threads)
 if(HTSLIB_FOUND)
@@ -97,6 +102,7 @@ install(FILES
   data/phylotree-rcrs-17.3-rules.csv
   data/phylotree-rcrs-17.3.LICENSE
   data/resource_manifest.tsv
+  data/mt_structure_catalog.tsv
   DESTINATION share/mito-architect/reference
 )
 
@@ -106,6 +112,12 @@ if(MITO_BUILD_TESTS AND BUILD_TESTING)
   target_compile_features(mito_core_smoke_test PRIVATE cxx_std_20)
   mito_enable_warnings(mito_core_smoke_test)
   add_test(NAME mito_core_smoke_test COMMAND mito_core_smoke_test)
+  add_executable(mito_precision_test tests/precision_test.cpp)
+  target_include_directories(mito_precision_test PRIVATE src)
+  target_link_libraries(mito_precision_test PRIVATE mito_core)
+  target_compile_features(mito_precision_test PRIVATE cxx_std_20)
+  mito_enable_warnings(mito_precision_test)
+  add_test(NAME mito_precision_test COMMAND mito_precision_test)
   add_executable(mito_phase_cancellation_test tests/phase_cancellation_test.cpp)
   target_include_directories(mito_phase_cancellation_test PRIVATE src)
   target_link_libraries(mito_phase_cancellation_test PRIVATE mito_core)

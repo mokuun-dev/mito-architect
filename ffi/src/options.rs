@@ -20,6 +20,9 @@ pub struct AnalyzeOptions {
     /// Let htslib resolve CRAM references via header UR/M5, REF_PATH and
     /// REF_CACHE. Keep false for untrusted input.
     pub allow_external_cram_references: bool,
+    /// At or above this many molecules, projections keep only events supported
+    /// by the precision caller. Zero keeps every raw per-read event.
+    pub compact_result_min_molecules: usize,
     pub evidence_page_size: usize,
     pub min_architecture_molecules: usize,
     pub max_candidate_architectures: usize,
@@ -54,6 +57,7 @@ impl Default for AnalyzeOptions {
             max_input_records: 50_000_000,
             max_input_bases: 10_000_000_000,
             allow_external_cram_references: false,
+            compact_result_min_molecules: 0,
             evidence_page_size: 4096,
             min_architecture_molecules: 2,
             max_candidate_architectures: 256,

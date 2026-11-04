@@ -115,6 +115,12 @@ struct AnalysisConfig {
    * bounds the traceability payload independently of the number of links. */
   std::size_t max_phase_molecule_references = 5'000'000;
 
+  /** At or above this many molecules, the read, cluster and event projections
+   * keep only events supported by the precision caller. Zero keeps every raw
+   * per-read event, which noisy long reads turn into tens of thousands of rows
+   * and clusters of one read. */
+  std::size_t compact_result_min_molecules = 0;
+
   /** Maximum serialized JSON payload in bytes. The engine fails closed before
    * returning a result too large for the caller or transport to retain. */
   std::size_t max_result_bytes = 128U * 1024U * 1024U;
@@ -125,7 +131,9 @@ struct AnalysisConfig {
   std::size_t max_input_records = 50'000'000;
 
   /** Maximum decoded query bases across all input records; see
-   * max_input_records. */
+   * max_input_records. Each SAM/BAM/CRAM record is charged the largest of its
+   * query length, a quarter of its decoded size, and its reference span, so
+   * tags, long CIGARs and deletion-only alignments count against the budget. */
   std::uint64_t max_input_bases = 10'000'000'000ULL;
 
   /** Let htslib resolve CRAM references outside the analysis reference via
@@ -211,6 +219,7 @@ struct AnalysisPhaseTimings {
   std::uint64_t resource_load_us = 0;
   std::uint64_t feature_extraction_us = 0;
   std::uint64_t event_merge_us = 0;
+  std::uint64_t precision_calling_us = 0;
   std::uint64_t clustering_us = 0;
   std::uint64_t evidence_aggregation_us = 0;
   std::uint64_t phase_link_build_us = 0;

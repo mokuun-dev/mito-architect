@@ -1,7 +1,7 @@
 import type { GeneAnnotation, MitoAnalysisData } from '@mito-architect/visualization-lib';
 import { useQuery } from '@tanstack/react-query';
 import { Orbit, Rows3 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import AnalysisModulesPanel from '../components/AnalysisModulesPanel';
 import CircosWrapper from '../components/CircosWrapper';
@@ -14,7 +14,8 @@ import { KpiStrip } from '../components/workspace/KpiStrip';
 import { ModuleNavigation, parseAnalysisModule } from '../components/workspace/ModuleNavigation';
 import { SampleHeader } from '../components/workspace/SampleHeader';
 import { getResult } from '../lib/api';
-import { demoData } from '../lib/demoData';
+import { fetchDemoIndex, fetchDemoSample, resolveDemoSample } from '../lib/demoPanel';
+import { projectPrecisionCalls, unsupportedEventCount } from '../lib/precisionProjection';
 import { buildEventRows, filterEventRows, sortEventRows, type EventRow } from '../lib/eventRows';
 import { useMitoStore, type OverviewView } from '../lib/store';
 
@@ -40,7 +41,21 @@ export default function ResultPage() {
     queryFn: ({ signal }) => getResult(jobId!, signal),
     enabled: Boolean(jobId) && !isDemo
   });
-  const data: MitoAnalysisData | undefined = isDemo ? demoData : result.data;
+  const [searchParams] = useSearchParams();
+  const demoIndex = useQuery({ queryKey: ['demo-index'], queryFn: ({ signal }) => fetchDemoIndex(signal), enabled: isDemo, staleTime: Infinity });
+  const demoEntry = demoIndex.data ? resolveDemoSample(demoIndex.data, searchParams.get('sample')) : undefined;
+  const demoSample = useQuery({
+    queryKey: ['demo-sample', demoEntry?.id],
+    queryFn: ({ signal }) => fetchDemoSample(demoEntry!, signal),
+    enabled: isDemo && demoEntry !== undefined,
+    staleTime: Infinity
+  });
+  const raw: MitoAnalysisData | undefined = isDemo ? demoSample.data : result.data;
+  const [showRawEvents, setShowRawEvents] = useState(false);
+  const supported = useMemo(() => (raw ? projectPrecisionCalls(raw) : undefined), [raw]);
+  const data = showRawEvents ? raw : supported;
+  const setAsideEvents = raw && supported ? unsupportedEventCount(raw, supported) : 0;
+  const hasStatisticalCalls = raw?.precision_calls?.assessed === true;
 
   useEffect(() => { setData(data); }, [data, setData]);
   useUrlState(Boolean(data));
@@ -61,13 +76,15 @@ export default function ResultPage() {
     setOverviewView('genome');
   }, [data, setOverviewView, setSelectedRegion]);
 
-  if (!isDemo && result.isLoading) return <ResultSkeleton />;
+  const loading = isDemo ? demoIndex.isLoading || demoSample.isLoading : result.isLoading;
+  const loadError = (isDemo ? demoIndex.error ?? demoSample.error : result.error) as Error | null | undefined;
+  if (loading) return <ResultSkeleton />;
   if (!data || !jobId) {
     return (
       <main id="main-content" className="page-shell">
         <div role="alert" className="card border-coral/40 p-6">
           <h1 className="text-lg font-semibold">Result unavailable</h1>
-          <p className="mt-2 text-sm text-muted">{(result.error as Error | undefined)?.message ?? 'The result could not be loaded.'}</p>
+          <p className="mt-2 text-sm text-muted">{loadError?.message ?? 'The result could not be loaded.'}</p>
         </div>
       </main>
     );
@@ -80,7 +97,7 @@ export default function ResultPage() {
 
   return (
     <main id="main-content" className={'mx-auto max-w-[1600px] px-4 pb-16 transition-[padding] sm:px-6 ' + (drawerOpen ? '2xl:pr-[464px]' : '')}>
-      <SampleHeader data={data} jobId={jobId} isDemo={isDemo} />
+      <SampleHeader data={data} jobId={jobId} isDemo={isDemo} demoIndex={demoIndex.data} demoEntry={demoEntry} />
       <div className="mt-5">
         <KpiStrip data={data} rows={rows} onOpen={setActiveModule} />
       </div>
@@ -91,6 +108,25 @@ export default function ResultPage() {
       <div className="mt-5">
         {overview ? (
           <div className="grid gap-4">
+            {hasStatisticalCalls && (
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-line bg-panel px-4 py-2.5 text-[13px]">
+                <span className="text-muted">
+                  {showRawEvents
+                    ? 'Showing every raw event, including per-read sequencing errors.'
+                    : setAsideEvents > 0
+                      ? `Showing calls that passed the statistical filters at 1% FDR. ${setAsideEvents.toLocaleString('en-US')} other raw events were set aside.`
+                      : 'Showing calls that passed the statistical filters at 1% FDR.'}
+                </span>
+                <span className="flex items-center gap-3">
+                  <button type="button" className="font-medium text-accent hover:underline" onClick={() => setActiveModule('calling')}>Call quality</button>
+                  {setAsideEvents > 0 && (
+                    <button type="button" className="font-medium text-accent hover:underline" onClick={() => setShowRawEvents((current) => !current)}>
+                      {showRawEvents ? 'Show supported calls' : 'Show raw events'}
+                    </button>
+                  )}
+                </span>
+              </div>
+            )}
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               <div className="segmented self-start" role="group" aria-label="Overview layout">
                 <ViewButton view="table" current={overviewView} onSelect={setOverviewView} />
@@ -106,7 +142,9 @@ export default function ResultPage() {
                 <section className="card overflow-hidden" aria-label="Events">
                   <EventsTable rows={filtered} selectedId={selectedId} onSelect={selectRow} hasDenominators={hasDenominators} />
                   <p className="border-t border-line px-4 py-3 text-xs leading-5 text-muted">
-                    {hasDenominators
+                    {hasDenominators && hasStatisticalCalls && !showRawEvents
+                      ? 'HF is the heteroplasmic fraction with a 95% confidence interval, corrected for this sample\'s error background. Positions outside the callable ranges are not assessed; no conclusion is drawn about them.'
+                      : hasDenominators
                       ? 'HF is the heteroplasmic fraction: ALT molecules over callable molecules at the position, with a 95% confidence interval. QC facts are observational, not calibrated filters.'
                       : 'This result reports supporting records without callable denominators, so support is not a frequency. Re-run with schema 0.6 for heteroplasmic fractions.'}
                   </p>

@@ -35,6 +35,7 @@ pub(super) struct MitoEngineAnalyzeOptionsV1 {
     pub max_input_records: usize,
     pub max_input_bases: u64,
     pub allow_external_cram_references: bool,
+    pub compact_result_min_molecules: usize,
 }
 
 unsafe extern "C" {

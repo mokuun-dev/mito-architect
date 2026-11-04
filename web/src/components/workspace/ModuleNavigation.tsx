@@ -2,6 +2,7 @@ import type { AnalysisModule } from '../../lib/store';
 
 export const MODULES = [
   { id: 'overview', label: 'Overview' },
+  { id: 'calling', label: 'Call quality' },
   { id: 'coverage', label: 'Coverage & QC' },
   { id: 'evidence', label: 'Molecules & phasing' },
   { id: 'architectures', label: 'Architectures' },

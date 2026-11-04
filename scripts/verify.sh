@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 python3 -m unittest discover -s scripts/public_data -v
+python3 -m unittest discover -s scripts/mtsim -v
 
 cmake -S . -B build -DMITO_BUILD_TESTS=ON
 cmake --build build -j2
@@ -28,6 +29,8 @@ python3 scripts/verify_full_genome.py
 npm run typecheck
 npm run build
 node web/src/lib/proteinStructureSources.test.mjs
+node web/src/lib/aminoAcids.test.mjs
+node web/src/lib/precisionProjection.test.mjs
 node web/src/lib/analysisNavigation.test.mjs
 node web/src/lib/interfaceContract.test.mjs
 node web/src/lib/eventRows.test.mjs
@@ -35,6 +38,8 @@ node web/src/lib/coverageModel.test.mjs
 node visualization-lib/src/circular/coordinates.test.mjs
 node visualization-lib/src/circular/dataAdapter.test.mjs
 bash scripts/verify_resources.sh
+python3 scripts/verify_demo_panel.py
+bash scripts/verify_precision_caller.sh
 bash scripts/verify_rc1_evidence.sh
 
 if [[ -f web/public/structures/manifest.sha256 ]]; then

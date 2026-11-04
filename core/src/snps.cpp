@@ -26,19 +26,20 @@ namespace mito::detail {
 }
 
 [[nodiscard]] std::vector<std::string>
-numt_evidence(const ReadRecord &read, std::size_t reference_length) {
+numt_evidence(const ReadRecord &read, std::size_t reference_length,
+              const bool allow_read_name_control) {
   std::vector<std::string> evidence;
-  const std::string id_lower = [&] {
-    std::string out = read.id;
-    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) {
+  // A read name is a development control, like the snp= and sv= tags. On real data
+  // a run or project name containing these words must not discard every read.
+  if (allow_read_name_control) {
+    std::string id_lower = read.id;
+    std::transform(id_lower.begin(), id_lower.end(), id_lower.begin(), [](unsigned char c) {
       return static_cast<char>(std::tolower(c));
     });
-    return out;
-  }();
-
-  if (id_lower.find("numt") != std::string::npos ||
-      id_lower.find("nuclear") != std::string::npos) {
-    evidence.emplace_back("read_name_heuristic");
+    if (id_lower.find("numt") != std::string::npos ||
+        id_lower.find("nuclear") != std::string::npos) {
+      evidence.emplace_back("read_name_heuristic");
+    }
   }
   if (looks_like_nuclear_contig(read.reference_name)) {
     evidence.emplace_back("primary_nuclear_alignment");

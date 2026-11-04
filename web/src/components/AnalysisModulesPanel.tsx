@@ -2,6 +2,7 @@ import type { MitoAnalysisData } from '@mito-architect/visualization-lib';
 import { useMemo } from 'react';
 import ClusterMutationPanel from './ClusterMutationPanel';
 import { ArchitecturePanel } from './analysis/ArchitecturePanel';
+import { CallQualityPanel } from './analysis/CallQualityPanel';
 import { ClinicalPanel } from './analysis/ClinicalPanel';
 import { CoveragePanel } from './analysis/CoveragePanel';
 import { EvidencePanel } from './analysis/EvidencePanel';
@@ -15,6 +16,7 @@ import { MODULES } from './workspace/ModuleNavigation';
 import { MethodSources } from './workspace/MethodSources';
 
 const DESCRIPTIONS: Partial<Record<AnalysisModule, string>> = {
+  calling: 'How calls were separated from sequencing error in this sample, and what was set aside.',
   coverage: 'Read depth across the reference and how it is distributed.',
   evidence: 'Molecules, per-position observations, and phase links behind each event.',
   architectures: 'Candidate molecular architectures inferred from co-occurring events.',
@@ -41,6 +43,7 @@ export default function AnalysisModulesPanel({ data, jobId }: { data: MitoAnalys
         </div>
       </div>
       <div className="min-w-0 p-5">
+        {active === 'calling' && <CallQualityPanel data={data} />}
         {active === 'coverage' && <CoveragePanel data={data} metrics={coverage} />}
         {active === 'evidence' && <EvidencePanel data={data} jobId={jobId} />}
         {active === 'architectures' && (

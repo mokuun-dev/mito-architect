@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { DEFAULT_EVENT_FILTERS, type EventFilters } from './eventRows';
 
 type LayerMap = Record<LayerName, boolean>;
-export type AnalysisModule = 'overview' | 'coverage' | 'evidence' | 'architectures' | 'rearrangements' | 'haplogroups' | 'clinical' | 'protein' | 'method';
+export type AnalysisModule = 'overview' | 'calling' | 'coverage' | 'evidence' | 'architectures' | 'rearrangements' | 'haplogroups' | 'clinical' | 'protein' | 'method';
 export type OverviewView = 'table' | 'genome';
 export type GenomeRegion = { start: number; end: number; label?: string };
 

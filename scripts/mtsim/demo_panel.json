@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "sources": {
+    "genomes": "Complete human mitochondrial genomes from GenBank, Ingman et al. 2000 (doi:10.1038/35047064), AF346963-AF347015. Accession numbers identify public sequences; no personal data is used.",
+    "reads": "Reads are simulated by scripts/mtsim/mtsim.py from each genome and aligned with minimap2, except the sample marked real.",
+    "spiked_variants": "Clinical variants and large deletions in these samples are added in silico to demonstrate the software. They are not findings about the person whose public sequence is the background."
+  },
+  "samples": [
+    {
+      "id": "h1r-hifi-control",
+      "title": "H1r, clean control",
+      "summary": "A lineage close to rCRS with no added variants: every call should be a background difference.",
+      "shows": ["clean control", "few homoplasmic variants"],
+      "accessions": ["AF346981"],
+      "scenario": {
+        "platform": "hifi", "coverage": 600, "seed": 101,
+        "read_length": {"model": "lognormal", "mean": 12000, "sigma": 0.3, "max": 16000},
+        "components": [{"name": "background", "genome": "AF346981", "fraction": 1.0}]
+      }
+    },
+    {
+      "id": "l0k-hifi-deep-lineage",
+      "title": "L0k1a1a, deep African lineage",
+      "summary": "One of the most diverged lineages from rCRS, with close to 100 homoplasmic differences.",
+      "shows": ["deep lineage", "many homoplasmic variants", "protein mapping"],
+      "accessions": ["AF347008"],
+      "scenario": {
+        "platform": "hifi", "coverage": 600, "seed": 102,
+        "read_length": {"model": "lognormal", "mean": 12000, "sigma": 0.3, "max": 16000},
+        "components": [{"name": "background", "genome": "AF347008", "fraction": 1.0}]
+      }
+    },
+    {
+      "id": "j1c-ont-lhon",
+      "title": "J1c4 with m.11778G>A",
+      "summary": "A J lineage on nanopore reads with the LHON variant MT-ND4 p.Arg340His added at 85%.",
+      "shows": ["clinical variant", "high heteroplasmy", "Complex I structure"],
+      "accessions": ["AF346983"],
+      "scenario": {
+        "platform": "ont_r10", "coverage": 800, "seed": 103,
+        "read_length": {"model": "lognormal", "mean": 8000, "sigma": 0.5, "max": 16000},
+        "components": [
+          {"name": "wild_type", "genome": "AF346983", "fraction": 0.15},
+          {"name": "variant", "genome": "AF346983", "fraction": 0.85,
+           "extra_edits": [{"position": 11778, "deleted": 1, "inserted": "A"}]}
+        ]
+      }
+    },
+    {
+      "id": "b4a-hifi-narp",
+      "title": "B4a1b1a with m.8993T>G",
+      "summary": "An East Asian lineage with its natural 9-bp deletion, and the NARP variant MT-ATP6 p.Leu156Arg added at 60%.",
+      "shows": ["clinical variant", "natural 9-bp deletion", "Complex V structure"],
+      "accessions": ["AF346993"],
+      "scenario": {
+        "platform": "hifi", "coverage": 800, "seed": 104,
+        "read_length": {"model": "lognormal", "mean": 12000, "sigma": 0.3, "max": 16000},
+        "components": [
+          {"name": "wild_type", "genome": "AF346993", "fraction": 0.40},
+          {"name": "variant", "genome": "AF346993", "fraction": 0.60,
+           "extra_edits": [{"position": 8993, "deleted": 1, "inserted": "G"}]}
+        ]
+      }
+    },
+    {
+      "id": "u5b-ont-melas-frameshift",
+      "title": "U5b3a1a with m.3243A>G and a frameshift",
+      "summary": "Nanopore reads with the MELAS tRNA variant at 30%, plus the two-base MT-ATP6 deletion m.9205_9206del at 12%.",
+      "shows": ["tRNA variant", "low-level frameshift", "small indel calling"],
+      "accessions": ["AF346988"],
+      "scenario": {
+        "platform": "ont_r10", "coverage": 1200, "seed": 105,
+        "read_length": {"model": "lognormal", "mean": 8000, "sigma": 0.5, "max": 16000},
+        "components": [
+          {"name": "wild_type", "genome": "AF346988", "fraction": 0.58},
+          {"name": "melas", "genome": "AF346988", "fraction": 0.30,
+           "extra_edits": [{"position": 3243, "deleted": 1, "inserted": "G"}]},
+          {"name": "frameshift", "genome": "AF346988", "fraction": 0.12,
+           "extra_edits": [{"position": 9205, "deleted": 2}]}
+        ]
+      }
+    },
+    {
+      "id": "t2e-hifi-common-deletion",
+      "title": "T2e with the common deletion",
+      "summary": "The 4,977-bp common deletion added at 40% of molecules, flanked by its 13-bp direct repeat.",
+      "shows": ["large deletion", "microhomology", "gene fusion at the junction"],
+      "accessions": ["AF346982"],
+      "scenario": {
+        "platform": "hifi", "coverage": 800, "seed": 106,
+        "read_length": {"model": "lognormal", "mean": 10000, "sigma": 0.4, "max": 16000},
+        "components": [
+          {"name": "wild_type", "genome": "AF346982", "fraction": 0.60},
+          {"name": "deleted", "genome": "AF346982", "fraction": 0.40,
+           "extra_edits": [{"position": 8483, "deleted": 4977}]}
+        ]
+      }
+    },
+    {
+      "id": "d4a-ont-multiple-deletions",
+      "title": "D4a1 with several rare deletions",
+      "summary": "Four large deletions at 1-6%, the pattern of multiple low-level deletions, on nanopore reads.",
+      "shows": ["multiple deletions", "low-level detection", "major arc"],
+      "accessions": ["AF346990"],
+      "scenario": {
+        "platform": "ont_r10", "coverage": 2000, "seed": 107,
+        "read_length": {"model": "lognormal", "mean": 8000, "sigma": 0.5, "max": 16000},
+        "components": [
+          {"name": "wild_type", "genome": "AF346990", "fraction": 0.87},
+          {"name": "common", "genome": "AF346990", "fraction": 0.06,
+           "extra_edits": [{"position": 8483, "deleted": 4977}]},
+          {"name": "long", "genome": "AF346990", "fraction": 0.03,
+           "extra_edits": [{"position": 7700, "deleted": 7000}]},
+          {"name": "short", "genome": "AF346990", "fraction": 0.03,
+           "extra_edits": [{"position": 10000, "deleted": 2500}]},
+          {"name": "rare", "genome": "AF346990", "fraction": 0.01,
+           "extra_edits": [{"position": 6500, "deleted": 5000}]}
+        ]
+      }
+    },
+    {
+      "id": "mix-h1-l3e-ont",
+      "title": "Mixture of two lineages",
+      "summary": "Molecules from an H1r and an L3e2b1a1 genome at 85% and 15%, as in a mixed or contaminated sample. Read phasing separates them.",
+      "shows": ["two lineages", "haplotype phasing", "contamination pattern"],
+      "accessions": ["AF346981", "AF347015"],
+      "scenario": {
+        "platform": "ont_r10", "coverage": 1000, "seed": 108,
+        "read_length": {"model": "lognormal", "mean": 8000, "sigma": 0.5, "max": 16000},
+        "components": [
+          {"name": "major", "genome": "AF346981", "fraction": 0.85},
+          {"name": "minor", "genome": "AF347015", "fraction": 0.15}
+        ]
+      }
+    },
+    {
+      "id": "c4b-hifi-amplicon",
+      "title": "C4b1, partial amplicon",
+      "summary": "Reads only from 5-12 kb. Positions outside are not callable: no conclusion is drawn about them, and the haplogroup rests on what was covered.",
+      "shows": ["NOT_CALLABLE regions", "partial coverage"],
+      "accessions": ["AF346991"],
+      "scenario": {
+        "platform": "hifi", "coverage": 500, "seed": 109,
+        "region": [5000, 12000],
+        "read_length": {"model": "lognormal", "mean": 3000, "sigma": 0.3, "max": 6500, "min": 800},
+        "components": [{"name": "background", "genome": "AF346991", "fraction": 1.0}]
+      }
+    },
+    {
+      "id": "a2b-ont-divergent-reads",
+      "title": "A2b1 with NUMT-like reads",
+      "summary": "3% of reads come from a diverged copy of one segment, standing in for nuclear mitochondrial sequence. These reads are excluded rather than reported as linked heteroplasmy.",
+      "shows": ["NUMT-like reads", "divergence filter"],
+      "accessions": ["AF346971"],
+      "scenario": {
+        "platform": "ont_r10", "coverage": 800, "seed": 110, "numt_fraction": 0.03,
+        "read_length": {"model": "lognormal", "mean": 8000, "sigma": 0.5, "max": 16000},
+        "components": [{"name": "background", "genome": "AF346971", "fraction": 1.0}]
+      }
+    },
+    {
+      "id": "gm12878-ont-real",
+      "title": "GM12878, real nanopore reads",
+      "summary": "The first 3,000 reads of the public run SRR18110025. There is no truth set here: the point is how the caller behaves on real, noisy nanopore data.",
+      "shows": ["real data", "no truth set", "noisy reads"],
+      "accessions": ["SRR18110025"],
+      "real": {
+        "bam": ".data/public/SRR18110025_3k/reads.bam",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/SRR18110025"
+      }
+    }
+  ]
+}

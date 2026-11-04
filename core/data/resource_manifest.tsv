@@ -6,3 +6,6 @@ phylotree-weights	17.3	phylotree-rcrs-17.3-weights.txt	d0962699365c7fe6f0b41f7c1
 phylotree-alignment-rules	17.3	phylotree-rcrs-17.3-rules.csv	0a4834cdbc780b810e406b570a88597868d60e854bd38146930455518f35d43b	https://github.com/genepi/haplogrep3/releases/tag/v3.3.2	MIT	2026-07-16
 RCSB-PDB-8H9S	8H9S	web/public/structures/8h9s.bcif	23c20bfc370758641833af7befd303e3d059c647e246309ab879697898368b30	https://www.rcsb.org/structure/8H9S	RCSB PDB data usage policy	2026-07-12
 RCSB-PDB-9I4I	9I4I	web/public/structures/9i4i.bcif	4775116b7792bb84086f56267e112071a462c1015ba289ae5f20c9e559948a36	https://www.rcsb.org/structure/9I4I	RCSB PDB data usage policy	2026-07-12
+RCSB-PDB-9HZL	9HZL	web/public/structures/9hzl.bcif	d57f751fd0672f2244f65ca8ebf3534e5ba983249d2b632a0d65daaa525dba2b	https://www.rcsb.org/structure/9HZL	RCSB PDB data usage policy	2026-11-04
+RCSB-PDB-9I7U	9I7U	web/public/structures/9i7u.bcif	7fcc00dabebda52fcadbe9a6108442db6b16c68683abde6e0b2eb8973932597e	https://www.rcsb.org/structure/9I7U	RCSB PDB data usage policy	2026-11-04
+mt-structure-catalog	2026-11-04	mt_structure_catalog.tsv	1aa3a59a87a519e242d79e290a263f15b16fa8a04544ae3cedca15ecbdd58f85	scripts/build_structure_catalog.py	Derived from rCRS and RCSB PDB entries	2026-11-04

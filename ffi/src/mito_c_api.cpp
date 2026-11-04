@@ -188,6 +188,7 @@ extern "C" void mito_engine_analyze_options_v1_init(
   options->max_input_records = 50'000'000U;
   options->max_input_bases = 10'000'000'000ULL;
   options->allow_external_cram_references = false;
+  options->compact_result_min_molecules = 0U;
 }
 
 extern "C" const char *mito_engine_analyze_with_options_v1(
@@ -200,8 +201,11 @@ extern "C" const char *mito_engine_analyze_with_options_v1(
   // Callers built against the 1.0 header pass the shorter base layout; the
   // appended fields are then not read and take their defaults.
   const bool full_layout = options->struct_size == sizeof(*options);
+  const bool has_input_limits =
+      full_layout ||
+      options->struct_size == MITO_ENGINE_ANALYZE_OPTIONS_V1_INPUT_LIMITS_SIZE;
   if (options->abi_version != MITO_ENGINE_ANALYZE_OPTIONS_ABI_V1 ||
-      (!full_layout &&
+      (!has_input_limits &&
        options->struct_size != MITO_ENGINE_ANALYZE_OPTIONS_V1_BASE_SIZE)) {
     set_error("MITO-E1001", "unsupported mito_engine_analyze_options_v1 layout");
     return nullptr;
@@ -242,11 +246,15 @@ extern "C" const char *mito_engine_analyze_with_options_v1(
     config.architecture_optional_fraction = options->architecture_optional_fraction;
     config.architecture_stability_replicates = options->architecture_stability_replicates;
     config.architecture_seed = options->architecture_seed;
-    if (full_layout) {
+    if (has_input_limits) {
       config.max_input_records = options->max_input_records;
       config.max_input_bases = options->max_input_bases;
       config.allow_external_cram_references =
           options->allow_external_cram_references;
+    }
+    if (full_layout) {
+      config.compact_result_min_molecules =
+          options->compact_result_min_molecules;
     }
     if (options->should_cancel != nullptr) {
       config.should_cancel = [callback = options->should_cancel,

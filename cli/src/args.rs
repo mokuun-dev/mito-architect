@@ -161,6 +161,11 @@ pub(super) struct AnalyzeArgs {
     #[arg(long = "allow-external-cram-references")]
     pub(super) allow_external_cram_references: bool,
 
+    /// At or above this many molecules, keep only events supported by the
+    /// precision caller in the read, cluster and event projections (0 keeps all).
+    #[arg(long = "compact-min-molecules", default_value_t = 0)]
+    pub(super) compact_min_molecules: usize,
+
     /// Maximum observations per schema 0.6 columnar page.
     #[arg(long = "evidence-page-size", default_value_t = 4096)]
     pub(super) evidence_page_size: usize,

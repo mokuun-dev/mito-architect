@@ -228,6 +228,46 @@ void input_budget_fails_closed() {
   std::filesystem::remove(fastq);
 }
 
+void reference_span_counts_against_base_budget() {
+  // Two query bases, but the alignment spans 16,002 reference bases. Spans
+  // feed per-base work downstream, so they are charged like query bases.
+  const auto sam = write_temp(
+      "span.sam", "@SQ\tSN:NC_012920.1\tLN:16569\nr\t0\tNC_012920.1\t100\t60"
+                  "\t1M16000D1M\t*\t0\t0\tAC\tII\n");
+  AnalysisConfig config;
+  config.max_input_bases = 1000U;
+  require(error_code_of(sam, config) == AnalysisErrorCode::resource_exhausted,
+          "reference span is charged to the base budget");
+  config.max_input_bases = 20000U;
+  require(error_code_of(sam, config) != AnalysisErrorCode::resource_exhausted,
+          "reference span within the base budget is accepted");
+  std::filesystem::remove(sam);
+}
+
+void work_budget_fails_closed() {
+  const AnalysisConfig config;
+  WorkBudget budget(config, 10U, "test stage");
+  budget.charge(10U);
+  bool exhausted = false;
+  try {
+    budget.charge(1U);
+  } catch (const AnalysisError &error) {
+    exhausted = error.code() == AnalysisErrorCode::resource_exhausted;
+  }
+  require(exhausted, "work budget fails closed once spent");
+
+  AnalysisConfig cancelling;
+  cancelling.should_cancel = [] { return true; };
+  WorkBudget cancelled_budget(cancelling, 100U, "test stage");
+  bool cancelled = false;
+  try {
+    cancelled_budget.charge(1U);
+  } catch (const AnalysisError &error) {
+    cancelled = error.code() == AnalysisErrorCode::analysis_cancelled;
+  }
+  require(cancelled, "work budget checks cancellation");
+}
+
 std::string rcrs() {
   std::ifstream in(bundled_rcrs_path());
   return parse_reference_fasta(in, bundled_rcrs_path());
@@ -340,6 +380,60 @@ void cram_reference_policy() {
   }
   std::filesystem::remove_all(empty);
 }
+
+// Writes a one-record BAM whose auxiliary data ends with a field of the given
+// type and raw bytes, as a damaged or crafted file would hold. htslib's
+// bam_aux_append does not check the bytes, and BAM writing copies them as is.
+std::string write_bam_with_raw_aux(const std::string &name, const char type,
+                                   const std::string &bytes) {
+  const auto path = write_temp(name, "");
+  const std::string header_text = "@SQ\tSN:NC_012920.1\tLN:16569\n";
+  sam_hdr_t *header = sam_hdr_parse(header_text.size(), header_text.c_str());
+  htsFile *out = sam_open(path.c_str(), "wb");
+  require(sam_hdr_write(out, header) == 0, "BAM header written");
+  bam1_t *record = bam_init1();
+  kstring_t line = KS_INITIALIZE;
+  kputs("r\t0\tNC_012920.1\t100\t60\t4M\t*\t0\t0\tACGT\tIIII", &line);
+  require(sam_parse1(&line, header, record) >= 0, "BAM record parsed");
+  require(bam_aux_append(record, "XX", type, static_cast<int>(bytes.size()),
+                         reinterpret_cast<const std::uint8_t *>(bytes.data())) == 0,
+          "raw auxiliary field appended");
+  require(sam_write1(out, header, record) >= 0, "BAM record written");
+  ks_free(&line);
+  bam_destroy1(record);
+  sam_hdr_destroy(header);
+  require(sam_close(out) == 0, "BAM closed");
+  return path;
+}
+
+void malformed_bam_aux_is_rejected() {
+  // An array that claims 2^32-1 elements and holds none. Reading it without
+  // a bounds check runs off the record.
+  const auto array = write_bam_with_raw_aux(
+      "aux-array.bam", 'B', std::string("c\xff\xff\xff\xff", 5U));
+  require(error_code_of(array, {}) == AnalysisErrorCode::input_parse_failed,
+          "BAM array longer than its record is rejected");
+  // A string with no terminating NUL at the end of the record. Reading it
+  // would copy whatever memory follows the record.
+  const auto text = write_bam_with_raw_aux("aux-string.bam", 'Z', "AAAA");
+  require(error_code_of(text, {}) == AnalysisErrorCode::input_parse_failed,
+          "unterminated BAM string is rejected");
+  std::filesystem::remove(array);
+  std::filesystem::remove(text);
+}
+
+void redirecting_formats_are_refused() {
+  // A .bam whose content is an htsget ticket. htslib follows every URL a
+  // ticket names; the engine must refuse the format first. The ticket holds
+  // only an inline data: URL with a valid SAM, so following it would succeed.
+  const auto ticket = write_temp(
+      "ticket.bam",
+      "{\"htsget\":{\"urls\":[{\"url\":\"data:,@SQ%09SN:NC_012920.1%09LN:16569"
+      "%0Ar%090%09NC_012920.1%09100%0960%094M%09*%090%090%09ACGT%09IIII%0A\"}]}}");
+  require(error_code_of(ticket, {}) == AnalysisErrorCode::input_parse_failed,
+          "htsget content is refused before htslib follows it");
+  std::filesystem::remove(ticket);
+}
 #endif
 
 } // namespace
@@ -347,9 +441,13 @@ void cram_reference_policy() {
 int main() {
   clustering_matches_brute_force();
   input_budget_fails_closed();
+  reference_span_counts_against_base_budget();
+  work_budget_fails_closed();
   origin_spanning_deletion_is_reported();
 #ifdef MITO_HAS_HTSLIB
   cram_reference_policy();
+  malformed_bam_aux_is_rejected();
+  redirecting_formats_are_refused();
 #endif
   if (failures != 0) {
     std::cerr << failures << " hardening check(s) failed\n";

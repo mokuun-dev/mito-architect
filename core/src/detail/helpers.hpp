@@ -48,6 +48,8 @@ struct TokenProfile {
 struct Neighborhood {
   std::vector<std::size_t> profiles;
   std::size_t read_count = 0;
+  /** Postings and candidates examined, charged to the clustering budget. */
+  std::size_t work = 0;
 };
 
 struct TokenPosting {

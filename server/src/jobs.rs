@@ -69,6 +69,7 @@ pub(super) async fn run_job(
         max_input_records: state.max_input_records,
         max_input_bases: state.max_input_bases,
         allow_external_cram_references: false,
+        compact_result_min_molecules: state.compact_result_min_molecules,
         evidence_page_size: analysis_options.evidence_page_size,
         min_architecture_molecules: state.min_architecture_molecules,
         max_candidate_architectures: state.max_candidate_architectures,

@@ -1,0 +1,765 @@
+{
+ "version": 1,
+ "sources": {
+  "genomes": "Complete human mitochondrial genomes from GenBank, Ingman et al. 2000 (doi:10.1038/35047064), AF346963-AF347015. Accession numbers identify public sequences; no personal data is used.",
+  "reads": "Reads are simulated by scripts/mtsim/mtsim.py from each genome and aligned with minimap2, except the sample marked real.",
+  "spiked_variants": "Clinical variants and large deletions in these samples are added in silico to demonstrate the software. They are not findings about the person whose public sequence is the background."
+ },
+ "samples": [
+  {
+   "id": "h1r-hifi-control",
+   "title": "H1r, clean control",
+   "summary": "A lineage close to rCRS with no added variants: every call should be a background difference.",
+   "shows": [
+    "clean control",
+    "few homoplasmic variants"
+   ],
+   "accessions": [
+    "AF346981"
+   ],
+   "simulated": true,
+   "platform": "hifi",
+   "file": "h1r-hifi-control.json",
+   "sha256": "6f4bcfb00fbb0aaa0b27b70c9e03b1f6c856c61b284136a77df253b4f4e3267a",
+   "haplogroup": "H1r",
+   "haplogroup_quality": 92.3349,
+   "haplotypes": 1,
+   "median_depth": 600,
+   "calls": {
+    "snvs_pass": 11,
+    "indels_pass": 1,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 11,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0016
+    },
+    "snv_easy": {
+     "tp": 10,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0003
+    },
+    "indel": {
+     "tp": 1,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "l0k-hifi-deep-lineage",
+   "title": "L0k1a1a, deep African lineage",
+   "summary": "One of the most diverged lineages from rCRS, with close to 100 homoplasmic differences.",
+   "shows": [
+    "deep lineage",
+    "many homoplasmic variants",
+    "protein mapping"
+   ],
+   "accessions": [
+    "AF347008"
+   ],
+   "simulated": true,
+   "platform": "hifi",
+   "file": "l0k-hifi-deep-lineage.json",
+   "sha256": "53045f8e6a2dcdccdf545edeea479cdef53b4e6f9badfe803eb73f9aa77a71ce",
+   "haplogroup": "L0k1a1a",
+   "haplogroup_quality": 98.6216,
+   "haplotypes": 1,
+   "median_depth": 600,
+   "calls": {
+    "snvs_pass": 97,
+    "indels_pass": 2,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 97,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0005
+    },
+    "snv_easy": {
+     "tp": 95,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0004
+    },
+    "indel": {
+     "tp": 2,
+     "fp": 0,
+     "fn": 1,
+     "precision": 1.0,
+     "recall": 0.6667,
+     "f1": 0.8,
+     "fraction_mae": 0.0
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "j1c-ont-lhon",
+   "title": "J1c4 with m.11778G>A",
+   "summary": "A J lineage on nanopore reads with the LHON variant MT-ND4 p.Arg340His added at 85%.",
+   "shows": [
+    "clinical variant",
+    "high heteroplasmy",
+    "Complex I structure"
+   ],
+   "accessions": [
+    "AF346983"
+   ],
+   "simulated": true,
+   "platform": "ont_r10",
+   "file": "j1c-ont-lhon.json",
+   "sha256": "ee199922994be64d03e47bad4d9200394ed79ec8a8bda702f43070ed74807c69",
+   "haplogroup": "J1c4",
+   "haplogroup_quality": 97.8907,
+   "haplotypes": 1,
+   "median_depth": 802,
+   "calls": {
+    "snvs_pass": 32,
+    "indels_pass": 2,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 29,
+     "fp": 3,
+     "fn": 0,
+     "precision": 0.9062,
+     "recall": 1.0,
+     "f1": 0.9508,
+     "fraction_mae": 0.0039
+    },
+    "snv_easy": {
+     "tp": 29,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.9667,
+     "recall": 1.0,
+     "f1": 0.9831,
+     "fraction_mae": 0.0039
+    },
+    "indel": {
+     "tp": 1,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.5,
+     "recall": 1.0,
+     "f1": 0.6667,
+     "fraction_mae": 0.0853
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "b4a-hifi-narp",
+   "title": "B4a1b1a with m.8993T>G",
+   "summary": "An East Asian lineage with its natural 9-bp deletion, and the NARP variant MT-ATP6 p.Leu156Arg added at 60%.",
+   "shows": [
+    "clinical variant",
+    "natural 9-bp deletion",
+    "Complex V structure"
+   ],
+   "accessions": [
+    "AF346993"
+   ],
+   "simulated": true,
+   "platform": "hifi",
+   "file": "b4a-hifi-narp.json",
+   "sha256": "11274bd75b1a2a3d0f6d81cd8269a60893253e225385dc17bcb2c0f0e70f51a3",
+   "haplogroup": "B4a1b1a",
+   "haplogroup_quality": 96.9296,
+   "haplotypes": 1,
+   "median_depth": 794,
+   "calls": {
+    "snvs_pass": 29,
+    "indels_pass": 3,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 29,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0054
+    },
+    "snv_easy": {
+     "tp": 26,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0015
+    },
+    "indel": {
+     "tp": 3,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0007
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "u5b-ont-melas-frameshift",
+   "title": "U5b3a1a with m.3243A>G and a frameshift",
+   "summary": "Nanopore reads with the MELAS tRNA variant at 30%, plus the two-base MT-ATP6 deletion m.9205_9206del at 12%.",
+   "shows": [
+    "tRNA variant",
+    "low-level frameshift",
+    "small indel calling"
+   ],
+   "accessions": [
+    "AF346988"
+   ],
+   "simulated": true,
+   "platform": "ont_r10",
+   "file": "u5b-ont-melas-frameshift.json",
+   "sha256": "f396e8115f153a9ea3505e49a193cbde4d93550f7c702c43a18194832808f6bf",
+   "haplogroup": "U5b3a1a",
+   "haplogroup_quality": 97.3831,
+   "haplotypes": 1,
+   "median_depth": 1200,
+   "calls": {
+    "snvs_pass": 30,
+    "indels_pass": 3,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 30,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0055
+    },
+    "snv_easy": {
+     "tp": 29,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0054
+    },
+    "indel": {
+     "tp": 2,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.6667,
+     "recall": 1.0,
+     "f1": 0.8,
+     "fraction_mae": 0.0455
+    },
+    "indel_easy": {
+     "tp": 1,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0076
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "t2e-hifi-common-deletion",
+   "title": "T2e with the common deletion",
+   "summary": "The 4,977-bp common deletion added at 40% of molecules, flanked by its 13-bp direct repeat.",
+   "shows": [
+    "large deletion",
+    "microhomology",
+    "gene fusion at the junction"
+   ],
+   "accessions": [
+    "AF346982"
+   ],
+   "simulated": true,
+   "platform": "hifi",
+   "file": "t2e-hifi-common-deletion.json",
+   "sha256": "cb033a32927e2becc4440ba83ea9a9032385d5614ee586d8f48fbba4b57bb69c",
+   "haplogroup": "T2e",
+   "haplogroup_quality": 98.4249,
+   "haplotypes": 1,
+   "median_depth": 920,
+   "calls": {
+    "snvs_pass": 32,
+    "indels_pass": 1,
+    "deletions_pass": 1
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 32,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0875
+    },
+    "snv_easy": {
+     "tp": 32,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0875
+    },
+    "indel": {
+     "tp": 1,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.004
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 1,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0368
+    }
+   }
+  },
+  {
+   "id": "d4a-ont-multiple-deletions",
+   "title": "D4a1 with several rare deletions",
+   "summary": "Four large deletions at 1-6%, the pattern of multiple low-level deletions, on nanopore reads.",
+   "shows": [
+    "multiple deletions",
+    "low-level detection",
+    "major arc"
+   ],
+   "accessions": [
+    "AF346990"
+   ],
+   "simulated": true,
+   "platform": "ont_r10",
+   "file": "d4a-ont-multiple-deletions.json",
+   "sha256": "e1b9a6e83d171f874e164e5072b63ddb3648aaccc90d26d2620377a418fd4f47",
+   "haplogroup": "D4a1",
+   "haplogroup_quality": 98.0776,
+   "haplotypes": 1,
+   "median_depth": 2052,
+   "calls": {
+    "snvs_pass": 38,
+    "indels_pass": 2,
+    "deletions_pass": 4
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 36,
+     "fp": 2,
+     "fn": 0,
+     "precision": 0.9474,
+     "recall": 1.0,
+     "f1": 0.973,
+     "fraction_mae": 0.0329
+    },
+    "snv_easy": {
+     "tp": 36,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0329
+    },
+    "indel": {
+     "tp": 1,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.5,
+     "recall": 1.0,
+     "f1": 0.6667,
+     "fraction_mae": 0.0478
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 4,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0142
+    }
+   }
+  },
+  {
+   "id": "mix-h1-l3e-ont",
+   "title": "Mixture of two lineages",
+   "summary": "Molecules from an H1r and an L3e2b1a1 genome at 85% and 15%, as in a mixed or contaminated sample. Read phasing separates them.",
+   "shows": [
+    "two lineages",
+    "haplotype phasing",
+    "contamination pattern"
+   ],
+   "accessions": [
+    "AF346981",
+    "AF347015"
+   ],
+   "simulated": true,
+   "platform": "ont_r10",
+   "file": "mix-h1-l3e-ont.json",
+   "sha256": "1942de57d1cf43c581e829e3cf46838c1051451c47e893ba15f97108575d78c2",
+   "haplogroup": "H1r",
+   "haplogroup_quality": 92.8401,
+   "haplotypes": 2,
+   "median_depth": 999,
+   "calls": {
+    "snvs_pass": 40,
+    "indels_pass": 1,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 40,
+     "fp": 0,
+     "fn": 2,
+     "precision": 1.0,
+     "recall": 0.9524,
+     "f1": 0.9756,
+     "fraction_mae": 0.0078
+    },
+    "snv_easy": {
+     "tp": 39,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0077
+    },
+    "indel": {
+     "tp": 0,
+     "fp": 1,
+     "fn": 2,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "fraction_mae": null
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "c4b-hifi-amplicon",
+   "title": "C4b1, partial amplicon",
+   "summary": "Reads only from 5-12 kb. Positions outside are not callable: no conclusion is drawn about them, and the haplogroup rests on what was covered.",
+   "shows": [
+    "NOT_CALLABLE regions",
+    "partial coverage"
+   ],
+   "accessions": [
+    "AF346991"
+   ],
+   "simulated": true,
+   "platform": "hifi",
+   "file": "c4b-hifi-amplicon.json",
+   "sha256": "ea1acd049cb56ff96308a2056d4d68c3a325aa08a98e2eb80b22961346636d48",
+   "haplogroup": "C4b1",
+   "haplogroup_quality": 96.4317,
+   "haplotypes": 1,
+   "median_depth": 534,
+   "calls": {
+    "snvs_pass": 16,
+    "indels_pass": 0,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 14,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0002
+    },
+    "snv_easy": {
+     "tp": 14,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0002
+    },
+    "indel": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "a2b-ont-divergent-reads",
+   "title": "A2b1 with NUMT-like reads",
+   "summary": "3% of reads come from a diverged copy of one segment, standing in for nuclear mitochondrial sequence. These reads are excluded rather than reported as linked heteroplasmy.",
+   "shows": [
+    "NUMT-like reads",
+    "divergence filter"
+   ],
+   "accessions": [
+    "AF346971"
+   ],
+   "simulated": true,
+   "platform": "ont_r10",
+   "file": "a2b-ont-divergent-reads.json",
+   "sha256": "88e08fd749ec26a0852b3bda334637b5c40dbc6b98d49b2d965c9e4064656dce",
+   "haplogroup": "A2b1",
+   "haplogroup_quality": 94.4967,
+   "haplotypes": 1,
+   "median_depth": 794,
+   "calls": {
+    "snvs_pass": 32,
+    "indels_pass": 3,
+    "deletions_pass": 0
+   },
+   "truth_check": {
+    "snv": {
+     "tp": 32,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0056
+    },
+    "snv_easy": {
+     "tp": 32,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": 0.0056
+    },
+    "indel": {
+     "tp": 2,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.6667,
+     "recall": 1.0,
+     "f1": 0.8,
+     "fraction_mae": 0.0492
+    },
+    "indel_easy": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    },
+    "large_deletion": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "fraction_mae": null
+    }
+   }
+  },
+  {
+   "id": "gm12878-ont-real",
+   "title": "GM12878, real nanopore reads",
+   "summary": "The first 3,000 reads of the public run SRR18110025. There is no truth set here: the point is how the caller behaves on real, noisy nanopore data.",
+   "shows": [
+    "real data",
+    "no truth set",
+    "noisy reads"
+   ],
+   "accessions": [
+    "SRR18110025"
+   ],
+   "simulated": false,
+   "platform": "ont_public",
+   "file": "gm12878-ont-real.json",
+   "sha256": "2f47aa084aa14984cc9edcf1623548af89c0d7a69c75d04472f6c1f8d4a17ef9",
+   "haplogroup": "H13a1a1a",
+   "haplogroup_quality": 99.1533,
+   "haplotypes": 1,
+   "median_depth": 1547,
+   "calls": {
+    "snvs_pass": 18,
+    "indels_pass": 0,
+    "deletions_pass": 0
+   },
+   "source": "https://www.ebi.ac.uk/ena/browser/view/SRR18110025"
+  }
+ ]
+}

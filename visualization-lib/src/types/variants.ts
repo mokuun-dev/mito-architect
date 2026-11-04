@@ -1,4 +1,5 @@
 import type { EvidenceEvent } from './evidence';
+import type { PrecisionDeletion, PrecisionEffect, PrecisionIndel, PrecisionSnv } from './precision';
 
 export interface StructuralVariant {
   id: string;
@@ -20,6 +21,8 @@ export interface StructuralVariant {
   orientations?: string[];
   segment_count?: number;
   annotation?: ClinicalAnnotation;
+  /** Set when this event comes from the statistical deletion caller. */
+  precision?: PrecisionDeletion;
 }
 
 /** Strand-invariant ordered path of two or more junctions observed on one molecule. */
@@ -88,6 +91,12 @@ export interface AggregateVariant extends SnpCall {
   ci95_high: number;
   supporting_reads: string[];
   supporting_molecule_ids?: string[];
+  /** Effect in every overlapping rCRS feature, from the statistical caller. */
+  effects?: PrecisionEffect[];
+  /** HGVS description of a small indel, placed by the 3' rule. */
+  hgvs?: string;
+  /** Set when this event comes from the statistical caller. */
+  precision?: PrecisionSnv | PrecisionIndel;
   filter_status?: 'NOT_CALIBRATED' | string;
   qc_flags?: string[];
   numt_assessability?: 'ASSESSABLE' | 'NOT_ASSESSABLE' | string;

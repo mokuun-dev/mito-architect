@@ -47,6 +47,8 @@ pub(super) struct AppState {
     pub(super) max_upload_bytes: usize,
     pub(super) max_input_records: usize,
     pub(super) max_input_bases: u64,
+    /// Molecules at which results keep only supported events; zero keeps all.
+    pub(super) compact_result_min_molecules: usize,
     /// Upper bound on job records kept (any state); finished jobs are evicted
     /// oldest first to admit new uploads.
     pub(super) max_stored_jobs: usize,

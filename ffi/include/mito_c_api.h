@@ -140,9 +140,14 @@ typedef struct mito_engine_analyze_options_v1 {
   /* Let htslib resolve CRAM references through header UR paths/URLs, M5
    * lookups, REF_PATH and REF_CACHE. Keep false for untrusted input. */
   bool allow_external_cram_references;
+  /* At or above this many molecules, projections keep only events supported by
+   * the precision caller. Zero keeps every raw per-read event. */
+  size_t compact_result_min_molecules;
 } mito_engine_analyze_options_v1;
 #define MITO_ENGINE_ANALYZE_OPTIONS_V1_BASE_SIZE                               \
   offsetof(mito_engine_analyze_options_v1, max_input_records)
+#define MITO_ENGINE_ANALYZE_OPTIONS_V1_INPUT_LIMITS_SIZE                       \
+  offsetof(mito_engine_analyze_options_v1, compact_result_min_molecules)
 void mito_engine_analyze_options_v1_init(
     mito_engine_analyze_options_v1 *options) MITO_NOEXCEPT;
 const char *mito_engine_analyze_with_options_v1(

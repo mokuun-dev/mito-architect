@@ -425,9 +425,14 @@ fn options_struct_matches_the_c_layout() {
             offset_of!(MitoEngineAnalyzeOptionsV1, allow_external_cram_references),
             224,
         ),
+        (
+            "compact_result_min_molecules",
+            offset_of!(MitoEngineAnalyzeOptionsV1, compact_result_min_molecules),
+            232,
+        ),
     ];
     for (field, actual, expected) in offsets {
         assert_eq!(actual, expected, "offset of {field}");
     }
-    assert_eq!(std::mem::size_of::<MitoEngineAnalyzeOptionsV1>(), 232);
+    assert_eq!(std::mem::size_of::<MitoEngineAnalyzeOptionsV1>(), 240);
 }

@@ -1,6 +1,7 @@
 import type { AggregateVariant } from '@mito-architect/visualization-lib';
 import type { ClinicalAnnotation } from '@mito-architect/visualization-lib';
 import type { MitoAnalysisData } from '@mito-architect/visualization-lib';
+import type { PrecisionEffect } from '@mito-architect/visualization-lib';
 import type { ProteinStructureMapping } from '@mito-architect/visualization-lib';
 import type { ReadFeature } from '@mito-architect/visualization-lib';
 export { summarizeCoverage } from '../../lib/coverageModel';
@@ -18,6 +19,8 @@ export interface VariantSummary {
   residue?: string;
   annotation?: ClinicalAnnotation;
   structure?: ProteinStructureMapping;
+  /** Effects in every overlapping gene, when the statistical caller ran. */
+  effects?: PrecisionEffect[];
   molecules: Array<{ id: string; clusterId: number }>;
   callableDepth?: number;
   ci95Low?: number;
@@ -38,9 +41,10 @@ export function summarizeVariants(reads: ReadFeature[], data: MitoAnalysisData):
       const type = snp.type ?? 'SNV';
       snps.set(key, {
         key,
-        label: type === 'SNV'
-          ? `${snp.position} ${snp.ref}>${snp.alt}`
-          : `${type.replace('SMALL_', '').toLowerCase()} ${snp.position} ${snp.ref}>${snp.alt}`,
+        label: snp.hgvs
+          ?? (type === 'SNV'
+            ? `${snp.position} ${snp.ref}>${snp.alt}`
+            : `${type.replace('SMALL_', '').toLowerCase()} ${snp.position} ${snp.ref}>${snp.alt}`),
         type,
         position: snp.position,
         support: snp.alt_depth,
@@ -51,6 +55,7 @@ export function summarizeVariants(reads: ReadFeature[], data: MitoAnalysisData):
         residue: snp.residue,
         annotation: snp.annotation,
         structure: snp.structure,
+        effects: snp.effects,
         molecules: (snp.supporting_molecule_ids ?? snp.supporting_reads).map((id) => ({
           id,
           clusterId: readClusterById.get(id) ?? -1
@@ -100,9 +105,9 @@ export function summarizeVariants(reads: ReadFeature[], data: MitoAnalysisData):
     label: `${sv.type} ${sv.start}-${sv.end}`,
     type: sv.type,
     position: sv.start,
-    support: sv.supporting_reads.length,
-    // A structural-event negative-evidence denominator is not guaranteed by legacy payloads.
-    frequency: Number.NaN,
+    support: sv.precision?.junction_molecules ?? sv.supporting_reads.length,
+    // Only the statistical caller measures wild-type molecules at the breakpoints.
+    frequency: sv.precision?.fraction ?? Number.NaN,
     annotation: sv.annotation,
     molecules: sv.supporting_reads.map((id) => ({
       id,
